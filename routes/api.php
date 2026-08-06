@@ -19,6 +19,16 @@ Route::prefix('v1')->group(function () {
     // Auth Routes
     Route::post('/auth/login', [AuthController::class, 'login']);
 
+    // Public Settings & Health Routes
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::get('/health', function () {
+        return response()->json([
+            'status' => 'ok',
+            'service' => 'LENTERA Pajak Desa Pro API',
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    });
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -53,8 +63,7 @@ Route::prefix('v1')->group(function () {
         // Reports Routes
         Route::get('/reports/21-column', [ReportController::class, 'report21Column']);
 
-        // Settings Routes
-        Route::get('/settings', [SettingController::class, 'index']);
+        // Settings Save Route
         Route::post('/settings', [SettingController::class, 'update']);
     });
 });
