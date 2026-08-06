@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Api\Concerns\HandlesCollectorDusunFilter;
+use App\Http\Controllers\Controller;
+use App\Repositories\TransactionRepository;
+use App\Services\PaymentService;
+use Illuminate\Http\Request;
+
+class TransactionController extends Controller
+{
+    use HandlesCollectorDusunFilter;
+
+    public function __construct(
+        protected PaymentService $paymentService,
+        protected TransactionRepository $transactionRepository
+    ) {}
+
+    public function index(Request $request)
+    {
+        $filters = $request->all();
+        $effectiveDusun = $this->getEffectiveDusunFilter($request);
+        if ($effectiveDusun) {
+            $filters['dusun'] = $effectiveDusun;
+        }
+
+        $transactions = $this->transactionRepository->getFilteredTransactions($filters);
+
+        return response()->json([
+            'success' => true,
+            'data' => $transactions->items(),
+            'meta' => [
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+                'per_page' => $transactions->perPage(),
+                'total' => $transactions->total(),
+            ],
+        ]);
+    }
+
+    public function show(int $id)
+    {
+        $transaction = $this->transactionRepository->findById($id);
+
+        if (!$transaction) {
+            return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaction,
+        ]);
+    }
+
+    public function pay(Request $request)
+    {
+        $payload = $request->all();
+        $operatorId = $request->user() ? $request->user()->id : 1;
+
+        $transaction = $this->paymentService->processPayment($payload, $operatorId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran Kasir STTS berhasil diproses',
+            'data' => $transaction,
+        ], 201);
+    }
+
+    public function void(Request $request, int $id)
+    {
+        $reason = $request->input('reason', 'Pembatalan transaksi oleh operator');
+        $userId = $request->user() ? $request->user()->id : 1;
+
+        $transaction = $this->paymentService->voidTransaction($id, $reason, $userId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaksi STTS berhasil di-void dan status DHKP di-rollback',
+            'data' => $transaction,
+        ]);
+    }
+
+    public function createGroup(Request $request)
+    {
+        $validated = $request->validate([
+            'trxIds' => 'required|array',
+            'groupName' => 'required|string',
+        ]);
+
+        $groupId = 'GRP-' . strtoupper(substr(md5($validated['groupName'] . time()), 0, 6));
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pengelompokan 1 KK ({$validated['groupName']}) berhasil dibuat",
+            'data' => ['customGroupId' => $groupId],
+        ]);
+    }
+
+    public function dissolveGroup(Request $request)
+    {
+        $validated = $request->validate([
+            'customGroupId' => 'required|string',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pengelompokan {$validated['customGroupId']} berhasil dibubarkan",
+            'data' => ['customGroupId' => $validated['customGroupId']],
+        ]);
+    }
+}
