@@ -31,6 +31,14 @@ class AuthController extends Controller
             ]);
         }
 
+        $clientPlatform = strtolower($request->header('X-Client-Platform', $request->input('client_platform', 'web')));
+        $normalizedRole = strtolower(str_replace('_', '', $user->role));
+        if ($clientPlatform === 'mobile' && !in_array($normalizedRole, ['kolektor', 'kepaladesa'])) {
+            throw ValidationException::withMessages([
+                'username' => ['Akses aplikasi mobile hanya diizinkan untuk Kolektor dan Kepala Desa.'],
+            ]);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

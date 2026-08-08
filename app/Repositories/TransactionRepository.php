@@ -26,7 +26,15 @@ class TransactionRepository
                 : array_map('trim', explode(',', $filters['dusun']));
 
             $query->whereHas('dhkpRows', function ($dq) use ($dusuns) {
-                $dq->whereIn('dusun', $dusuns);
+                $dq->where(function ($q) use ($dusuns) {
+                    foreach ($dusuns as $index => $d) {
+                        if ($index === 0) {
+                            $q->where('dusun', 'LIKE', $d);
+                        } else {
+                            $q->orWhere('dusun', 'LIKE', $d);
+                        }
+                    }
+                });
             });
         }
 

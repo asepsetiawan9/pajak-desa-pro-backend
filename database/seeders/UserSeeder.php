@@ -56,6 +56,17 @@ class UserSeeder extends Seeder
                 'status_aktif' => true,
             ],
             [
+                'name' => 'Aep Saepudin',
+                'username' => 'kolektor.puncak',
+                'nip' => '-',
+                'email' => 'aep@malangbong.desa.id',
+                'phone' => '081311223344',
+                'password' => Hash::make('password123'),
+                'role' => 'KOLEKTOR',
+                'dusun_akses' => 'PUNCAK SARI, CIPEDES',
+                'status_aktif' => true,
+            ],
+            [
                 'name' => 'H. Dadang Kusnadi, S.H.',
                 'username' => 'kades.malangbong',
                 'nip' => '19750804 200501 1 002',

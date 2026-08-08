@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-		"name": "LENTERA - Pajak Desa Pro API (v1)",
+		"name": "LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API (v1)",
 		"description": "Koleksi Endpoint RESTful API v1 lengkap dengan request examples, post-response scripts (auto save Bearer Token), serta mock response structure untuk pengujian oleh Tim Developer / Programmer.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},

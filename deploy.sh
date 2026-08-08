@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🚀 LENTERA Pajak Desa Pro - Production One-Click Deployment Script
+# 🚀 LENTERA (Layanan Elektronik Terpadu Pajak Daerah) - Production One-Click Deployment Script
 # Automatic Git Pull, Composer Install, Database Migration & Cache Refresh
 # ==============================================================================
 

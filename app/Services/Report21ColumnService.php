@@ -11,9 +11,26 @@ class Report21ColumnService
     /**
      * Membangun Agregasi Laporan 21-Kolom Resmi Per Dusun/Blok
      */
-    public function generate21ColumnReport(int $tahun = 2026, ?string $dusunFilter = null): array
+    public function generate21ColumnReport(int $tahun = 2026, ?string $dusunFilter = null, ?string $bukuFilter = null): array
     {
-        $dusuns = DhkpRow::where('tahun', $tahun)
+        $queryBase = DhkpRow::where('tahun', $tahun);
+
+        if (!empty($bukuFilter) && strtoupper($bukuFilter) !== 'SEMUA' && strtoupper($bukuFilter) !== 'ALL') {
+            $bukuUpper = strtoupper(trim($bukuFilter));
+            if ($bukuUpper === 'BUKU_1' || $bukuUpper === '1') {
+                $queryBase->where('ketetapan_pbb', '<=', 100000);
+            } elseif ($bukuUpper === 'BUKU_2' || $bukuUpper === '2') {
+                $queryBase->where('ketetapan_pbb', '>', 100000)->where('ketetapan_pbb', '<=', 500000);
+            } elseif ($bukuUpper === 'BUKU_3' || $bukuUpper === '3') {
+                $queryBase->where('ketetapan_pbb', '>', 500000)->where('ketetapan_pbb', '<=', 2000000);
+            } elseif ($bukuUpper === 'BUKU_4' || $bukuUpper === '4') {
+                $queryBase->where('ketetapan_pbb', '>', 2000000)->where('ketetapan_pbb', '<=', 5000000);
+            } elseif ($bukuUpper === 'BUKU_5' || $bukuUpper === '5') {
+                $queryBase->where('ketetapan_pbb', '>', 5000000);
+            }
+        }
+
+        $dusuns = (clone $queryBase)
             ->whereNotNull('dusun')
             ->distinct()
             ->pluck('dusun')
@@ -45,7 +62,7 @@ class Report21ColumnService
         $totalRealisasiSpptDesa = 0;
 
         foreach ($dusuns as $index => $dusun) {
-            $rows = DhkpRow::where('tahun', $tahun)->where('dusun', $dusun)->get();
+            $rows = (clone $queryBase)->where('dusun', $dusun)->get();
 
             $spptKetetapan = $rows->count();
             $pokokKetetapan = (int) $rows->sum('ketetapan_pbb');
@@ -84,6 +101,7 @@ class Report21ColumnService
 
         return [
             'tahun' => $tahun,
+            'buku' => $bukuFilter ?? 'SEMUA',
             'details' => $result,
             'summary' => [
                 'total_sppt_ketetapan' => $totalSpptDesa,

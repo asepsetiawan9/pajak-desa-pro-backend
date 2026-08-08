@@ -1,6 +1,6 @@
-# 🚀 Panduan Penggunaan Postman API — LENTERA Pajak Desa Pro (v1)
+# 🚀 Panduan Penggunaan Postman API — LENTERA (Layanan Elektronik Terpadu Pajak Daerah) (v1)
 
-Dokumentasi dan koleksi API Postman ini dibuat secara resmi untuk memudahkan seluruh tim pengembang (*backend/frontend/QA/integrator*) dalam menguji, mengembangkan, dan memverifikasi endpoint REST API **LENTERA Pajak Desa Pro**.
+Dokumentasi dan koleksi API Postman ini dibuat secara resmi untuk memudahkan seluruh tim pengembang (*backend/frontend/QA/integrator*) dalam menguji, mengembangkan, dan memverifikasi endpoint REST API **LENTERA (Layanan Elektronik Terpadu Pajak Daerah)**.
 
 ---
 
@@ -20,7 +20,7 @@ Semua berkas Postman tersimpan pada folder `pajak-backend/postman/`:
 1. Buka aplikasi **Postman** (atau API Client favorit Anda seperti Insomnia / Bruno).
 2. Klik tombol **Import** di pojok kiri atas.
 3. Drag & Drop atau pilih berkas `LENTERA_Pajak_Desa_Pro.postman_collection.json` dan `LENTERA_Local.postman_environment.json`.
-4. Di pojok kanan atas Postman, pilih Environment **"LENTERA Pajak Desa Pro - Local"**.
+4. Di pojok kanan atas Postman, pilih Environment **"LENTERA (Layanan Elektronik Terpadu Pajak Daerah) - Local"**.
 
 ---
 

@@ -22,14 +22,19 @@ class DhkpRepository
         }
 
         if (!empty($filters['dusun']) && $filters['dusun'] !== 'ALL') {
-            if (is_array($filters['dusun'])) {
-                $query->whereIn('dusun', $filters['dusun']);
-            } elseif (str_contains($filters['dusun'], ',')) {
-                $dusuns = array_map('trim', explode(',', $filters['dusun']));
-                $query->whereIn('dusun', $dusuns);
-            } else {
-                $query->where('dusun', $filters['dusun']);
-            }
+            $dusuns = is_array($filters['dusun'])
+                ? $filters['dusun']
+                : array_map('trim', explode(',', $filters['dusun']));
+
+            $query->where(function ($q) use ($dusuns) {
+                foreach ($dusuns as $index => $d) {
+                    if ($index === 0) {
+                        $q->where('dusun', 'LIKE', $d);
+                    } else {
+                        $q->orWhere('dusun', 'LIKE', $d);
+                    }
+                }
+            });
         }
 
         if (!empty($filters['blok']) && $filters['blok'] !== 'ALL') {
@@ -94,7 +99,15 @@ class DhkpRepository
 
         if (!empty($dusunFilter) && $dusunFilter !== 'ALL') {
             $filterDusuns = array_map('trim', explode(',', $dusunFilter));
-            $query->whereIn('dusun', $filterDusuns);
+            $query->where(function ($q) use ($filterDusuns) {
+                foreach ($filterDusuns as $index => $d) {
+                    if ($index === 0) {
+                        $q->where('dusun', 'LIKE', $d);
+                    } else {
+                        $q->orWhere('dusun', 'LIKE', $d);
+                    }
+                }
+            });
         }
 
         $totalKetetapan = (int) $query->sum('ketetapan_pbb');

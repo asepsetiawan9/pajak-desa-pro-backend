@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| REST API Routes - LENTERA Pajak Desa Pro (v1)
+| REST API Routes - LENTERA (Layanan Elektronik Terpadu Pajak Daerah) (v1)
 |--------------------------------------------------------------------------
 */
 
@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/health', function () {
         return response()->json([
             'status' => 'ok',
-            'service' => 'LENTERA Pajak Desa Pro API',
+            'service' => 'LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API',
             'timestamp' => now()->toIso8601String(),
         ]);
     });
@@ -62,6 +62,7 @@ Route::prefix('v1')->group(function () {
 
         // Reports Routes
         Route::get('/reports/21-column', [ReportController::class, 'report21Column']);
+        Route::get('/reports/21-columns', [ReportController::class, 'report21Column']);
 
         // Settings Save Route
         Route::post('/settings', [SettingController::class, 'update']);
