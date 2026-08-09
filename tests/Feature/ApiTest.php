@@ -20,7 +20,7 @@ class ApiTest extends TestCase
     public function test_user_can_login_with_valid_credentials()
     {
         $response = $this->postJson('/api/v1/auth/login', [
-            'username' => 'kades.malangbong',
+            'username' => 'kades.barudua',
             'password' => 'password123',
         ]);
 
@@ -33,7 +33,8 @@ class ApiTest extends TestCase
 
     public function test_dhkp_summary_returns_kpi()
     {
-        $response = $this->getJson('/api/v1/dhkp/summary?tahun=2026');
+        $user = User::first();
+        $response = $this->actingAs($user)->getJson('/api/v1/dhkp/summary?tahun=2026');
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
@@ -45,11 +46,12 @@ class ApiTest extends TestCase
     public function test_kasir_stts_payment_process_and_void_rollback()
     {
         $kolektor = User::where('username', 'kolektor.balok')->first();
+        $dhkp = DhkpRow::where('status_bayar', 'BELUM_BAYAR')->first();
 
-        // 1. Process payment for NOP 32.05.010.001.001-0002.0 with items payload format
+        // 1. Process payment for first NOP with items payload format
         $response = $this->actingAs($kolektor)->postJson('/api/v1/transactions', [
             'items' => [
-                ['nop' => '32.05.010.001.001-0002.0']
+                ['nop' => $dhkp->nop]
             ],
             'tahun' => 2026,
             'metode' => 'TUNAI',
@@ -63,8 +65,8 @@ class ApiTest extends TestCase
         $transactionId = $response->json('data.id');
 
         // Check DHKP status is now LUNAS
-        $dhkp = DhkpRow::where('nop', '32.05.010.001.001-0002.0')->first();
-        $this->assertEquals('LUNAS', $dhkp->status_bayar);
+        $dhkpFresh = DhkpRow::find($dhkp->id);
+        $this->assertEquals('LUNAS', $dhkpFresh->status_bayar);
 
         // 2. Void transaction via DELETE /transactions/{id}
         $voidResponse = $this->actingAs($kolektor)->deleteJson("/api/v1/transactions/{$transactionId}", [
@@ -75,14 +77,16 @@ class ApiTest extends TestCase
             ->assertJsonPath('success', true);
 
         // Check DHKP status is rolled back to BELUM_BAYAR
-        $dhkpFresh = DhkpRow::where('nop', '32.05.010.001.001-0002.0')->first();
-        $this->assertEquals('BELUM_BAYAR', $dhkpFresh->status_bayar);
+        $dhkpRollback = DhkpRow::find($dhkp->id);
+        $this->assertEquals('BELUM_BAYAR', $dhkpRollback->status_bayar);
     }
 
     public function test_custom_grouping_and_dhkp_deletion()
     {
+        $user = User::first();
+
         // Test Grouping 1 KK
-        $groupResponse = $this->postJson('/api/v1/transactions/group', [
+        $groupResponse = $this->actingAs($user)->postJson('/api/v1/transactions/group', [
             'trxIds' => ['1', '2'],
             'groupName' => 'Keluarga Pak Dedi',
         ]);
@@ -93,14 +97,15 @@ class ApiTest extends TestCase
 
         // Test DHKP row deletion
         $dhkp = DhkpRow::first();
-        $deleteResponse = $this->deleteJson("/api/v1/dhkp/{$dhkp->id}");
+        $deleteResponse = $this->actingAs($user)->deleteJson("/api/v1/dhkp/{$dhkp->id}");
         $deleteResponse->assertStatus(200)->assertJsonPath('success', true);
         $this->assertNull(DhkpRow::find($dhkp->id));
     }
 
     public function test_21_column_report_generation()
     {
-        $response = $this->getJson('/api/v1/reports/21-column?tahun=2026');
+        $user = User::first();
+        $response = $this->actingAs($user)->getJson('/api/v1/reports/21-column?tahun=2026');
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
@@ -111,7 +116,8 @@ class ApiTest extends TestCase
 
     public function test_dhkp_bulk_excel_import()
     {
-        $response = $this->postJson('/api/v1/dhkp/import', [
+        $user = User::first();
+        $response = $this->actingAs($user)->postJson('/api/v1/dhkp/import', [
             'rows' => [
                 [
                     'nop' => '32.05.010.009.009-9999.0',
@@ -137,9 +143,10 @@ class ApiTest extends TestCase
 
     public function test_settings_update_persists_identity_and_instansi()
     {
+        $user = User::first();
         $payload = [
             'settings' => [
-                'namaDesa' => 'Desa Sukamaju Baru',
+                'namaDesa' => 'Desa Barudua Baru',
                 'kecamatan' => 'Cisaat',
                 'kabupaten' => 'Kabupaten Sukabumi',
                 'kodeDesa' => '32.02.010.005',
@@ -148,19 +155,19 @@ class ApiTest extends TestCase
             ]
         ];
 
-        $response = $this->postJson('/api/v1/settings', $payload);
+        $response = $this->actingAs($user)->postJson('/api/v1/settings', $payload);
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.namaDesa', 'Desa Sukamaju Baru')
+            ->assertJsonPath('data.namaDesa', 'Desa Barudua Baru')
             ->assertJsonPath('data.kabupaten', 'Kabupaten Sukabumi')
             ->assertJsonPath('data.kecamatan', 'Cisaat')
-            ->assertJsonPath('data.nama_desa', 'Desa Sukamaju Baru')
+            ->assertJsonPath('data.nama_desa', 'Desa Barudua Baru')
             ->assertJsonPath('data.nama_instansi', 'Kabupaten Sukabumi');
 
-        $getReponse = $this->getJson('/api/v1/settings');
+        $getReponse = $this->actingAs($user)->getJson('/api/v1/settings');
         $getReponse->assertStatus(200)
-            ->assertJsonPath('data.namaDesa', 'Desa Sukamaju Baru')
+            ->assertJsonPath('data.namaDesa', 'Desa Barudua Baru')
             ->assertJsonPath('data.kabupaten', 'Kabupaten Sukabumi')
             ->assertJsonPath('data.nama_instansi', 'Kabupaten Sukabumi');
     }

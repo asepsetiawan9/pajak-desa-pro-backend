@@ -91,7 +91,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"1|laravel_sanctum_token_example_abcdef123456\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"email\": \"admin@malangbong.desa.id\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    }\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"1|laravel_sanctum_token_example_abcdef123456\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"email\": \"admin@barudua.desa.id\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    }\n  }\n}"
 						}
 					]
 				},
@@ -176,7 +176,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"3|laravel_sanctum_collector_token_987654321\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"email\": \"deden@malangbong.desa.id\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"3|laravel_sanctum_collector_token_987654321\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"email\": \"deden@barudua.desa.id\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  }\n}"
 						}
 					]
 				},
@@ -238,7 +238,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Asep Setiawan, S.Kom\",\n    \"username\": \"admin.desa\",\n    \"nip\": \"19880512 201201 1 004\",\n    \"email\": \"admin@malangbong.desa.id\",\n    \"phone\": \"081234567890\",\n    \"role\": \"SUPER_ADMIN\",\n    \"dusun_akses\": \"ALL\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-05T00:00:00.000000Z\",\n    \"updated_at\": \"2026-08-05T00:00:00.000000Z\"\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Asep Setiawan, S.Kom\",\n    \"username\": \"admin.desa\",\n    \"nip\": \"19880512 201201 1 004\",\n    \"email\": \"admin@barudua.desa.id\",\n    \"phone\": \"081234567890\",\n    \"role\": \"SUPER_ADMIN\",\n    \"dusun_akses\": \"ALL\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-05T00:00:00.000000Z\",\n    \"updated_at\": \"2026-08-05T00:00:00.000000Z\"\n  }\n}"
 						}
 					]
 				},
@@ -378,7 +378,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"nip\": \"19880512 201201 1 004\",\n      \"email\": \"admin@malangbong.desa.id\",\n      \"phone\": \"081234567890\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"nip\": \"-\",\n      \"email\": \"deden@malangbong.desa.id\",\n      \"phone\": \"085712349876\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  ]\n}"
+							"body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"nip\": \"19880512 201201 1 004\",\n      \"email\": \"admin@barudua.desa.id\",\n      \"phone\": \"081234567890\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"nip\": \"-\",\n      \"email\": \"deden@barudua.desa.id\",\n      \"phone\": \"085712349876\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  ]\n}"
 						}
 					]
 				},
@@ -402,7 +402,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@malangbong.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
+							"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@barudua.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/users",
@@ -432,7 +432,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@malangbong.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
+									"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@barudua.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
 								},
 								"url": {
 									"raw": "{{baseUrl}}/users",
@@ -454,7 +454,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengguna berhasil ditambahkan\",\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budi.kolektor\",\n    \"nip\": \"199501012020011002\",\n    \"email\": \"budi@malangbong.desa.id\",\n    \"phone\": \"081234567899\",\n    \"role\": \"KOLEKTOR\",\n    \"dusun_akses\": \"BALOK, CIDERES\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-06T08:47:00.000000Z\",\n    \"updated_at\": \"2026-08-06T08:47:00.000000Z\"\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Pengguna berhasil ditambahkan\",\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budi.kolektor\",\n    \"nip\": \"199501012020011002\",\n    \"email\": \"budi@barudua.desa.id\",\n    \"phone\": \"081234567899\",\n    \"role\": \"KOLEKTOR\",\n    \"dusun_akses\": \"BALOK, CIDERES\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-06T08:47:00.000000Z\",\n    \"updated_at\": \"2026-08-06T08:47:00.000000Z\"\n  }\n}"
 						}
 					]
 				},
@@ -1780,7 +1780,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"nama_desa\": \"Desa Malangbong\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5,\n    \"nama_kepala_desa\": \"H. Dadang Kusnadi, S.H.\",\n    \"nip_kepala_desa\": \"19750804 200501 1 002\"\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5,\n    \"nama_kepala_desa\": \"Endang Yana\",\n    \"nip_kepala_desa\": \"19750804 200501 1 002\"\n  }\n}"
 						}
 					]
 				},
@@ -1804,7 +1804,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Malangbong\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
+							"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/settings",
@@ -1834,7 +1834,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Malangbong\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
+									"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
 								},
 								"url": {
 									"raw": "{{baseUrl}}/settings",
@@ -1856,7 +1856,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengaturan sistem berhasil disimpan ke database\",\n  \"data\": {\n    \"nama_desa\": \"Desa Malangbong\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Pengaturan sistem berhasil disimpan ke database\",\n  \"data\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
 						}
 					]
 				}

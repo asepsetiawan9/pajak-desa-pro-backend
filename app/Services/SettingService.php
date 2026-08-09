@@ -15,7 +15,7 @@ class SettingService
         'kecamatan' => 'Malangbong',
         'kabupaten' => 'Kabupaten Garut',
         'kodeDesa' => '32.05.080.001',
-        'namaKades' => 'H. Asep Mulyana, S.IP',
+        'namaKades' => 'Endang Yana',
         'nipKades' => '19780512 200501 1 004',
         'namaPetugas' => 'Kolektor PBB Desa',
         'nipPetugas' => '19850315 201002 1 002',

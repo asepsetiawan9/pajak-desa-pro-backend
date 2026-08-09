@@ -34,7 +34,7 @@ Gunakan kredensial berikut pada request **`01. Authentication -> 1. Login`**:
 | **BENDAHARA** | `bendahara.pbb` | `password123` | `ALL` | Mengelola transaksi, kasir STTS & laporan |
 | **KOLEKTOR** | `kolektor.balok` | `password123` | `BALOK, CIDERES` | Data otomatis tersaring ke dusun penugasan |
 | **KOLEKTOR** | `kolektor.cideres` | `password123` | `CIDERES` | Data otomatis tersaring hanya dusun Cideres |
-| **KEPALA_DESA** | `kades.malangbong` | `password123` | `ALL` | Mode monitoring & rekapitulasi |
+| **KEPALA_DESA** | `kades.barudua` | `password123` | `ALL` | Mode monitoring & rekapitulasi |
 
 ---
 
@@ -113,7 +113,7 @@ Koleksi Postman ini sudah dilengkapi dengan **Test Script Otomatis** pada endpoi
       "id": 1,
       "name": "Asep Setiawan, S.Kom",
       "username": "admin.desa",
-      "email": "admin@malangbong.desa.id",
+      "email": "admin@barudua.desa.id",
       "role": "SUPER_ADMIN",
       "dusun_akses": "ALL",
       "status_aktif": true
