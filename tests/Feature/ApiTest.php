@@ -81,6 +81,26 @@ class ApiTest extends TestCase
         $this->assertEquals('BELUM_BAYAR', $dhkpRollback->status_bayar);
     }
 
+    public function test_payment_with_flexible_nop_dhkp_id_and_tahun_fallback()
+    {
+        $kolektor = User::where('username', 'kolektor.balok')->first();
+        $dhkp = DhkpRow::where('status_bayar', 'BELUM_BAYAR')->first();
+
+        // Test payment using dhkp_id and nop without specifying root year or mismatched year
+        $response = $this->actingAs($kolektor)->postJson('/api/v1/transactions/pay', [
+            'dhkp_id' => $dhkp->id,
+            'nop' => $dhkp->nop,
+            'tahun' => 2024, // mismatched year test, should fallback and succeed
+            'metode_pembayaran' => 'CASH',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true);
+
+        $dhkpFresh = DhkpRow::find($dhkp->id);
+        $this->assertEquals('LUNAS', $dhkpFresh->status_bayar);
+    }
+
     public function test_custom_grouping_and_dhkp_deletion()
     {
         $user = User::first();

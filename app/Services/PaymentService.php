@@ -23,37 +23,116 @@ class PaymentService
      */
     public function processPayment(array $payload, int $operatorId): TransactionRecord
     {
+        // Extract NOPs from various payload formats
         $nops = $payload['nops'] ?? [];
+        if (is_string($nops)) {
+            $nops = [$nops];
+        }
         if (empty($nops) && !empty($payload['items']) && is_array($payload['items'])) {
             $nops = array_filter(array_map(fn($item) => is_array($item) ? ($item['nop'] ?? null) : null, $payload['items']));
         }
+        if (empty($nops) && !empty($payload['nop'])) {
+            $nops = [$payload['nop']];
+        }
+        $nops = array_values(array_filter(array_map('trim', (array) $nops)));
 
-        $tahun = $payload['tahun'] ?? 2026;
+        // Extract DHKP IDs from various payload formats
+        $dhkpIds = $payload['dhkp_ids'] ?? [];
+        if (is_numeric($dhkpIds) || is_string($dhkpIds)) {
+            $dhkpIds = [(int) $dhkpIds];
+        }
+        if (empty($dhkpIds) && !empty($payload['dhkp_id'])) {
+            $dhkpIds = [(int) $payload['dhkp_id']];
+        }
+        if (empty($dhkpIds) && !empty($payload['id'])) {
+            $dhkpIds = [(int) $payload['id']];
+        }
+        if (empty($dhkpIds) && !empty($payload['items']) && is_array($payload['items'])) {
+            $dhkpIds = array_values(array_filter(array_map(fn($item) => is_array($item) ? (int) ($item['dhkpId'] ?? $item['dhkp_id'] ?? $item['id'] ?? 0) : 0, $payload['items'])));
+        }
+        $dhkpIds = array_values(array_filter($dhkpIds, fn($id) => $id > 0));
+
+        if (empty($nops) && empty($dhkpIds)) {
+            throw ValidationException::withMessages(['nops' => 'Daftar NOP atau ID DHKP pembayaran tidak boleh kosong.']);
+        }
+
+        // Determine explicit tahun if provided (do not force hardcoded fallback that breaks query)
+        $tahun = isset($payload['tahun']) ? (int) $payload['tahun'] : null;
+        if (!$tahun && !empty($payload['items']) && is_array($payload['items'])) {
+            foreach ($payload['items'] as $item) {
+                if (is_array($item) && !empty($item['tahun'])) {
+                    $tahun = (int) $item['tahun'];
+                    break;
+                }
+            }
+        }
+
         $metode = strtoupper($payload['metode_pembayaran'] ?? $payload['metode'] ?? 'CASH');
         if ($metode === 'TUNAI') {
             $metode = 'CASH';
         }
 
         $metadataKk = $payload['metadata_kk'] ?? [
-            'uang_dibayar' => $payload['uangDibayar'] ?? null,
+            'uang_dibayar' => $payload['uangDibayar'] ?? $payload['uang_dibayar'] ?? null,
             'kembalian' => $payload['kembalian'] ?? null,
             'petugas' => $payload['petugas'] ?? null,
         ];
 
-        if (empty($nops)) {
-            throw ValidationException::withMessages(['nops' => 'Daftar NOP pembayaran tidak boleh kosong.']);
-        }
-
         $feePerLuarDesa = (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000);
 
-        return DB::transaction(function () use ($nops, $tahun, $metode, $operatorId, $metadataKk, $feePerLuarDesa) {
+        return DB::transaction(function () use ($nops, $dhkpIds, $tahun, $metode, $operatorId, $metadataKk, $feePerLuarDesa) {
             // Lock rows for update to prevent concurrent double-payments
-            $rows = DhkpRow::whereIn('nop', $nops)
-                ->where('tahun', $tahun)
-                ->lockForUpdate()
-                ->get();
+            $query = DhkpRow::query()->lockForUpdate();
 
-            if ($rows->count() !== count($nops)) {
+            if (!empty($dhkpIds)) {
+                $query->whereIn('id', $dhkpIds);
+            } else {
+                $query->whereIn('nop', $nops);
+            }
+
+            if ($tahun !== null) {
+                $query->where('tahun', $tahun);
+            }
+
+            $rows = $query->get();
+            $expectedCount = !empty($dhkpIds) ? count($dhkpIds) : count($nops);
+
+            // Fallback A: If year filter caused missing rows, query without year constraint
+            if ($rows->count() !== $expectedCount && $tahun !== null) {
+                $fallbackQuery = DhkpRow::query()->lockForUpdate();
+                if (!empty($dhkpIds)) {
+                    $fallbackQuery->whereIn('id', $dhkpIds);
+                } else {
+                    $fallbackQuery->whereIn('nop', $nops);
+                }
+                $fallbackRows = $fallbackQuery->get();
+                if ($fallbackRows->count() === $expectedCount) {
+                    $rows = $fallbackRows;
+                }
+            }
+
+            // Fallback B: If searching by dhkp_id failed, try searching by nops if available
+            if ($rows->count() !== $expectedCount && !empty($nops)) {
+                $nopQuery = DhkpRow::whereIn('nop', $nops)->lockForUpdate();
+                if ($tahun !== null) {
+                    $nopQuery->where('tahun', $tahun);
+                }
+                $nopRows = $nopQuery->get();
+                if ($nopRows->count() === count($nops)) {
+                    $rows = $nopRows;
+                } else {
+                    $nopFallbackRows = DhkpRow::whereIn('nop', $nops)->lockForUpdate()->get();
+                    if ($nopFallbackRows->count() === count($nops)) {
+                        $rows = $nopFallbackRows;
+                    }
+                }
+            }
+
+            if ($rows->count() === 0) {
+                throw ValidationException::withMessages(['nops' => 'NOP atau data DHKP yang Anda pilih tidak ditemukan pada database.']);
+            }
+
+            if ($rows->count() !== $expectedCount) {
                 throw ValidationException::withMessages(['nops' => 'Beberapa NOP yang Anda pilih tidak ditemukan pada tahun ketetapan ini.']);
             }
 
