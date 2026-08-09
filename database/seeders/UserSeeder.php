@@ -79,6 +79,12 @@ class UserSeeder extends Seeder
             ],
         ];
 
+        // Clean up legacy malangbong users and existing KEPALA_DESA records
+        User::where('username', 'like', '%malangbong%')
+            ->orWhere('email', 'like', '%malangbong%')
+            ->orWhere('role', 'KEPALA_DESA')
+            ->delete();
+
         foreach ($users as $userData) {
             User::where('username', $userData['username'])
                 ->orWhere('email', $userData['email'])

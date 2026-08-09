@@ -27,9 +27,10 @@ git reset --hard origin/main
 echo "📦 Menginstal dependensi Composer (Production)..."
 composer install --no-dev --optimize-autoloader --no-interaction
 
-# Run database migrations safely
-echo "🗄️ Menjalankan migrasi database..."
+# Run database migrations & user seeder safely
+echo "🗄️ Menjalankan migrasi database & user seeder..."
 php artisan migrate --force
+php artisan db:seed --class=UserSeeder --force
 
 # Optimize Laravel Caching & Configuration
 echo "⚡ Memperbarui cache konfigurasi, route, dan view..."
