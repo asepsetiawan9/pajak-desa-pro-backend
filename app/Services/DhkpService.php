@@ -18,7 +18,7 @@ class DhkpService
     {
         $dhkp = $this->dhkpRepository->findById($id);
         if (!$dhkp) {
-            throw new \InvalidArgumentException("Data SPPT DHKP ID {$id} tidak ditemukan.");
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(DhkpRow::class, [$id]);
         }
         return $dhkp;
     }
