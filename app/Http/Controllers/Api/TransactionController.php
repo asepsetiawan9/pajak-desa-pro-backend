@@ -20,6 +20,13 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $filters = $request->all();
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+
+        if (!$isSuperAdmin && $user && $user->desa_id) {
+            $filters['desa_id'] = $user->desa_id;
+        }
+
         $effectiveDusun = $this->getEffectiveDusunFilter($request);
         if ($effectiveDusun) {
             $filters['dusun'] = $effectiveDusun;

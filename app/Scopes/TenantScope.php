@@ -13,8 +13,8 @@ class TenantScope implements Scope
         if (auth()->check()) {
             $user = auth()->user();
 
-            // Ignore tenant scope if user is SUPER_ADMIN_SYSTEM, SUPER_ADMIN, or has no desa_id
-            if ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id)) {
+            // Ignore tenant scope ONLY if user is SUPER_ADMIN_SYSTEM or has no desa_id (Admin Kecamatan / System)
+            if ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id)) {
                 return;
             }
 

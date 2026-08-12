@@ -17,7 +17,6 @@ class Report21ColumnService
         $user = auth()->user();
         $isSuperAdmin = $user && (
             $user->role === 'SUPER_ADMIN_SYSTEM' ||
-            $user->role === 'SUPER_ADMIN' ||
             is_null($user->desa_id)
         );
 

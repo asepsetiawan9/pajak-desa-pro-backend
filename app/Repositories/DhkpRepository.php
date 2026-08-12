@@ -14,7 +14,7 @@ class DhkpRepository
     public function getFilteredDhkp(array $filters, int $perPage = 50): LengthAwarePaginator
     {
         $user = auth()->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
 
         $query = $isSuperAdmin
             ? DhkpRow::withoutGlobalScope(TenantScope::class)->with(['desa:id,nama_desa,kode_desa', 'kolektor:id,name', 'transaksi:id,nomor_stts'])
@@ -25,8 +25,10 @@ class DhkpRepository
             $effectivePerPage = 1000;
         }
 
-        if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
-            $query->where('desa_id', $filters['desa_id']);
+        if ($isSuperAdmin) {
+            if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
+                $query->where('desa_id', $filters['desa_id']);
+            }
         }
 
         if (!empty($filters['tahun'])) {
@@ -169,7 +171,11 @@ class DhkpRepository
     public function getSummaryKPI(int $tahun = 2026, ?string $dusunFilter = null, ?int $desaId = null): array
     {
         $user = auth()->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+
+        if (!$isSuperAdmin && $user && $user->desa_id) {
+            $desaId = $user->desa_id;
+        }
 
         $baseQuery = $isSuperAdmin
             ? DhkpRow::withoutGlobalScope(TenantScope::class)->where('tahun', $tahun)
@@ -206,7 +212,23 @@ class DhkpRepository
         // Group by Dusun
         $dusuns = (clone $query)->whereNotNull('dusun')->distinct()->pluck('dusun')->filter()->values()->toArray();
         if (empty($dusuns)) {
-            $dusuns = ['Balok', 'Cideres', 'Puncak Sari', 'Cipedes'];
+            $effectiveDesaId = $desaId ?? (!$isSuperAdmin && auth()->check() ? auth()->user()->desa_id : null);
+            if ($effectiveDesaId) {
+                $dusunsFromTarget = DusunTarget::withoutGlobalScope(TenantScope::class)
+                    ->where('desa_id', $effectiveDesaId)
+                    ->whereNotNull('nama_dusun')
+                    ->distinct()
+                    ->pluck('nama_dusun')
+                    ->filter()
+                    ->values()
+                    ->toArray();
+                if (!empty($dusunsFromTarget)) {
+                    $dusuns = $dusunsFromTarget;
+                }
+            }
+            if (empty($dusuns)) {
+                $dusuns = ['Balok', 'Cideres', 'Puncak Sari', 'Cipedes'];
+            }
             if (!empty($dusunFilter) && $dusunFilter !== 'ALL') {
                 $filterDusuns = array_map('trim', explode(',', $dusunFilter));
                 $dusuns = array_intersect($dusuns, $filterDusuns);
@@ -248,43 +270,47 @@ class DhkpRepository
         }
 
         // Group by Desa for Super Admin Multi-Tenant Rekap
-        $desas = Desa::where('status_aktif', true)->get();
         $byDesa = [];
 
-        if ($desas->isNotEmpty()) {
-            foreach ($desas as $desaItem) {
-                $desaQuery = DhkpRow::withoutGlobalScope(TenantScope::class)
-                    ->where('tahun', $tahun)
-                    ->where('desa_id', $desaItem->id);
+        if ($isSuperAdmin) {
+            $desas = Desa::where('status_aktif', true)->get();
+            if ($desas->isNotEmpty()) {
+                foreach ($desas as $desaItem) {
+                    $desaQuery = DhkpRow::withoutGlobalScope(TenantScope::class)
+                        ->where('tahun', $tahun)
+                        ->where('desa_id', $desaItem->id);
 
-                $target = (int) (clone $desaQuery)->sum('ketetapan_pbb');
-                $realisasi = (int) (clone $desaQuery)->where('status_bayar', 'LUNAS')->sum('ketetapan_pbb');
-                $spptCount = (clone $desaQuery)->count();
-                $desaLunas = (clone $desaQuery)->where('status_bayar', 'LUNAS')->count();
-                $desaBelum = $spptCount - $desaLunas;
-                $desaPersen = $target > 0 ? round(($realisasi / $target) * 100, 2) : 0;
+                    $target = (int) (clone $desaQuery)->sum('ketetapan_pbb');
+                    $realisasi = (int) (clone $desaQuery)->where('status_bayar', 'LUNAS')->sum('ketetapan_pbb');
+                    $spptCount = (clone $desaQuery)->count();
+                    $desaLunas = (clone $desaQuery)->where('status_bayar', 'LUNAS')->count();
+                    $desaBelum = $spptCount - $desaLunas;
+                    $desaPersen = $target > 0 ? round(($realisasi / $target) * 100, 2) : 0;
 
-                $byDesa[] = [
-                    'desa_id' => $desaItem->id,
-                    'nama_desa' => $desaItem->nama_desa,
-                    'kode_desa' => $desaItem->kode_desa,
-                    'target' => $target,
-                    'realisasi' => $realisasi,
-                    'sisa_piutang' => $target - $realisasi,
-                    'total_sppt' => $spptCount,
-                    'sppt_lunas' => $desaLunas,
-                    'sppt_belum' => $desaBelum,
-                    'persentase' => $desaPersen,
-                ];
+                    $byDesa[] = [
+                        'desa_id' => $desaItem->id,
+                        'nama_desa' => $desaItem->nama_desa,
+                        'kode_desa' => $desaItem->kode_desa,
+                        'target' => $target,
+                        'realisasi' => $realisasi,
+                        'sisa_piutang' => $target - $realisasi,
+                        'total_sppt' => $spptCount,
+                        'sppt_lunas' => $desaLunas,
+                        'sppt_belum' => $desaBelum,
+                        'persentase' => $desaPersen,
+                    ];
+                }
             }
-        }
-
-        if (empty($byDesa)) {
-            $defaultDesa = auth()->check() ? auth()->user()->desa : null;
+        } else {
+            $effectiveDesaId = $user->desa_id ?? 1;
+            $userDesaObj = $user ? $user->desa : null;
+            if (!$userDesaObj) {
+                $userDesaObj = Desa::find($effectiveDesaId);
+            }
             $byDesa[] = [
-                'desa_id' => $defaultDesa->id ?? 1,
-                'nama_desa' => $defaultDesa->nama_desa ?? 'Desa Barudua',
-                'kode_desa' => $defaultDesa->kode_desa ?? '3205120004',
+                'desa_id' => $userDesaObj->id ?? $effectiveDesaId,
+                'nama_desa' => $userDesaObj->nama_desa ?? 'Desa Barudua',
+                'kode_desa' => $userDesaObj->kode_desa ?? '3205120004',
                 'target' => $totalKetetapan,
                 'realisasi' => $terbayar,
                 'sisa_piutang' => $sisaPiutang,

@@ -16,6 +16,13 @@ class DhkpController extends Controller
     public function index(Request $request)
     {
         $filters = $request->all();
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+
+        if (!$isSuperAdmin && $user && $user->desa_id) {
+            $filters['desa_id'] = $user->desa_id;
+        }
+
         $effectiveDusun = $this->getEffectiveDusunFilter($request);
         if ($effectiveDusun) {
             $filters['dusun'] = $effectiveDusun;
@@ -56,7 +63,13 @@ class DhkpController extends Controller
     {
         $tahun = (int) ($request->tahun ?? 2026);
         $dusun = $this->getEffectiveDusunFilter($request);
-        $desaId = $request->desa_id ? (int) $request->desa_id : null;
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+
+        $desaId = $isSuperAdmin
+            ? ($request->desa_id ? (int) $request->desa_id : null)
+            : ($user ? (int) $user->desa_id : null);
+
         $summary = $this->dhkpService->getKpiSummary($tahun, $dusun, $desaId);
 
         return response()->json([
@@ -68,7 +81,7 @@ class DhkpController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
 
         $validated = $request->validate([
             'nop' => 'required|string|max:30',
@@ -106,7 +119,7 @@ class DhkpController extends Controller
     public function update(Request $request, int $id)
     {
         $user = $request->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
 
         $validated = $request->validate([
             'desa_id' => 'sometimes|nullable|integer',
@@ -154,7 +167,7 @@ class DhkpController extends Controller
     public function import(Request $request)
     {
         $user = $request->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
         $rows = $request->input('rows', []);
         if (!is_array($rows) || empty($rows)) {
             return response()->json([

@@ -10,7 +10,7 @@ class TransactionRepository
     public function getFilteredTransactions(array $filters, int $perPage = 25): LengthAwarePaginator
     {
         $user = auth()->user();
-        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
 
         $query = $isSuperAdmin
             ? TransactionRecord::withoutGlobalScope(\App\Scopes\TenantScope::class)->with(['desa:id,nama_desa,kode_desa', 'operator:id,name', 'dhkpRows.desa:id,nama_desa,kode_desa'])
@@ -21,14 +21,16 @@ class TransactionRepository
             $effectivePerPage = 10000;
         }
 
-        if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
-            $desaIdFilter = $filters['desa_id'];
-            $query->where(function ($q) use ($desaIdFilter) {
-                $q->where('desa_id', $desaIdFilter)
-                  ->orWhereHas('dhkpRows', function ($dq) use ($desaIdFilter) {
-                      $dq->where('desa_id', $desaIdFilter);
-                  });
-            });
+        if ($isSuperAdmin) {
+            if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
+                $desaIdFilter = $filters['desa_id'];
+                $query->where(function ($q) use ($desaIdFilter) {
+                    $q->where('desa_id', $desaIdFilter)
+                      ->orWhereHas('dhkpRows', function ($dq) use ($desaIdFilter) {
+                          $dq->where('desa_id', $desaIdFilter);
+                      });
+                });
+            }
         }
 
         if (!empty($filters['status_void'])) {
