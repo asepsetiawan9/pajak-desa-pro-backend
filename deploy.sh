@@ -30,6 +30,7 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # Run database migrations & user seeder safely
 echo "🗄️ Menjalankan migrasi database & user seeder..."
 php artisan migrate --force
+php artisan db:seed --class=DesaSeeder --force
 php artisan db:seed --class=UserSeeder --force
 
 # Optimize Laravel Caching & Configuration
