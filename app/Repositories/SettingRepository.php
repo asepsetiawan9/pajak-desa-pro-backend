@@ -15,8 +15,10 @@ class SettingRepository
         'kabupaten' => 'nama_instansi',
         'kodeDesa' => 'kode_desa',
         'tahunAktif' => 'tahun_pajak',
+        'jabatanKades' => 'jabatan_kades',
         'namaKades' => 'nama_kades',
         'nipKades' => 'nip_kades',
+        'jabatanPetugas' => 'jabatan_bendahara',
         'namaPetugas' => 'nama_bendahara',
         'nipPetugas' => 'nip_bendahara',
         'teleponDesa' => 'telepon_desa',
@@ -34,9 +36,18 @@ class SettingRepository
         'jumlahSalinan' => 'jumlah_salinan',
     ];
 
-    public function getAll(): array
+    protected function getScopedQuery(?int $desaId = null)
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        if ($desaId !== null) {
+            return Setting::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('desa_id', $desaId);
+        }
+        return Setting::query();
+    }
+
+    public function getAll(?int $desaId = null): array
+    {
+        $query = $this->getScopedQuery($desaId);
+        $settings = $query->pluck('value', 'key')->toArray();
         $result = [];
 
         foreach ($settings as $key => $value) {
@@ -57,9 +68,9 @@ class SettingRepository
         return $result;
     }
 
-    public function getByKey(string $key, $default = null)
+    public function getByKey(string $key, $default = null, ?int $desaId = null)
     {
-        $setting = Setting::where('key', $key)->first();
+        $setting = $this->getScopedQuery($desaId)->where('key', $key)->first();
         if ($setting !== null) {
             return $setting->value;
         }
@@ -67,7 +78,7 @@ class SettingRepository
         // Coba cari melalui alias jika key utama tidak ditemukan
         $aliasKey = $this->aliases[$key] ?? array_search($key, $this->aliases);
         if ($aliasKey) {
-            $aliasSetting = Setting::where('key', $aliasKey)->first();
+            $aliasSetting = $this->getScopedQuery($desaId)->where('key', $aliasKey)->first();
             if ($aliasSetting !== null) {
                 return $aliasSetting->value;
             }
@@ -76,20 +87,30 @@ class SettingRepository
         return $default;
     }
 
-    public function setKey(string $key, $value, ?string $description = null): Setting
+    public function setKey(string $key, $value, ?string $description = null, ?int $desaId = null): Setting
     {
         $stringValue = is_bool($value) ? ($value ? 'true' : 'false') : (string) $value;
 
-        $setting = Setting::updateOrCreate(
-            ['key' => $key],
+        $matchCriteria = ['key' => $key];
+        if ($desaId !== null) {
+            $matchCriteria['desa_id'] = $desaId;
+        }
+
+        $setting = Setting::withoutGlobalScope(\App\Scopes\TenantScope::class)->updateOrCreate(
+            $matchCriteria,
             ['value' => $stringValue, 'description' => $description]
         );
 
         // Jika memiliki alias, sinkronkan juga nilai aliasnya
         $aliasKey = $this->aliases[$key] ?? array_search($key, $this->aliases);
         if ($aliasKey) {
-            Setting::updateOrCreate(
-                ['key' => $aliasKey],
+            $aliasMatchCriteria = ['key' => $aliasKey];
+            if ($desaId !== null) {
+                $aliasMatchCriteria['desa_id'] = $desaId;
+            }
+
+            Setting::withoutGlobalScope(\App\Scopes\TenantScope::class)->updateOrCreate(
+                $aliasMatchCriteria,
                 ['value' => $stringValue, 'description' => $description ? "Alias for {$key}" : null]
             );
         }
@@ -97,10 +118,10 @@ class SettingRepository
         return $setting;
     }
 
-    public function setMultiple(array $settings): void
+    public function setMultiple(array $settings, ?int $desaId = null): void
     {
         foreach ($settings as $key => $value) {
-            $this->setKey($key, $value);
+            $this->setKey($key, $value, null, $desaId);
         }
     }
 }

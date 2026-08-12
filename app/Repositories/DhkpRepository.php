@@ -2,19 +2,31 @@
 
 namespace App\Repositories;
 
+use App\Models\Desa;
 use App\Models\DhkpRow;
 use App\Models\DusunTarget;
+use App\Scopes\TenantScope;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class DhkpRepository
 {
+    public function __construct(protected SettingRepository $settingRepository) {}
     public function getFilteredDhkp(array $filters, int $perPage = 50): LengthAwarePaginator
     {
-        $query = DhkpRow::query()->with(['kolektor:id,name', 'transaksi:id,nomor_stts']);
+        $user = auth()->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+
+        $query = $isSuperAdmin
+            ? DhkpRow::withoutGlobalScope(TenantScope::class)->with(['desa:id,nama_desa,kode_desa', 'kolektor:id,name', 'transaksi:id,nomor_stts'])
+            : DhkpRow::query()->with(['desa:id,nama_desa,kode_desa', 'kolektor:id,name', 'transaksi:id,nomor_stts']);
 
         $effectivePerPage = !empty($filters['limit']) ? (int) $filters['limit'] : (!empty($filters['per_page']) ? (int) $filters['per_page'] : $perPage);
         if ($effectivePerPage <= 0) {
             $effectivePerPage = 1000;
+        }
+
+        if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
+            $query->where('desa_id', $filters['desa_id']);
         }
 
         if (!empty($filters['tahun'])) {
@@ -77,25 +89,97 @@ class DhkpRepository
         return DhkpRow::whereIn('nop', $nops)->where('tahun', $tahun)->get();
     }
 
+    public function syncTransactionForLunas(DhkpRow $dhkpRow): DhkpRow
+    {
+        if ($dhkpRow->status_bayar === 'LUNAS' && !$dhkpRow->transaksi_id) {
+            $datePrefix = date('Ymd');
+            $randomSuffix = strtoupper(substr(md5(uniqid()), 0, 4));
+            $nomorStts = "STTS-DHKP-{$datePrefix}-{$randomSuffix}";
+
+            $transaction = \App\Models\TransactionRecord::create([
+                'desa_id' => $dhkpRow->desa_id ?? auth()->user()?->desa_id ?? 1,
+                'nomor_stts' => $nomorStts,
+                'tanggal_transaksi' => $dhkpRow->tanggal_bayar ?? now(),
+                'operator_id' => auth()->id() ?? 1,
+                'total_pokok' => $dhkpRow->ketetapan_pbb,
+                'total_denda' => $dhkpRow->denda ?? 0,
+                'total_fee' => $dhkpRow->fee_kolektor ?? 0,
+                'total_bayar' => $dhkpRow->ketetapan_pbb + ($dhkpRow->denda ?? 0) + ($dhkpRow->fee_kolektor ?? 0),
+                'metode_pembayaran' => 'TUNAI',
+                'status_void' => false,
+                'metadata_kk' => ['petugas' => 'Petugas DHKP'],
+            ]);
+
+            $dhkpRow->update([
+                'transaksi_id' => $transaction->id,
+                'tanggal_bayar' => $dhkpRow->tanggal_bayar ?? now(),
+            ]);
+        } elseif ($dhkpRow->status_bayar === 'BELUM_BAYAR' && $dhkpRow->transaksi_id) {
+            \App\Models\TransactionRecord::where('id', $dhkpRow->transaksi_id)->update([
+                'status_void' => true,
+                'void_reason' => 'Status DHKP diubah ke BELUM_BAYAR',
+                'void_at' => now(),
+            ]);
+            $dhkpRow->update([
+                'transaksi_id' => null,
+                'tanggal_bayar' => null,
+            ]);
+        }
+
+        return $dhkpRow->fresh();
+    }
+
     public function create(array $data): DhkpRow
     {
-        return DhkpRow::create($data);
+        $data['total_bayar'] = ($data['ketetapan_pbb'] ?? 0) + ($data['denda'] ?? 0) + ($data['fee_kolektor'] ?? 0);
+        $tahun = (int) ($data['tahun'] ?? 2026);
+        $desaId = (int) ($data['desa_id'] ?? 1);
+
+        if (!empty($data['nop'])) {
+            $existing = DhkpRow::withoutGlobalScope(TenantScope::class)
+                ->where('nop', $data['nop'])
+                ->where('tahun', $tahun)
+                ->where('desa_id', $desaId)
+                ->first();
+
+            if ($existing) {
+                $existing->update($data);
+                return $this->syncTransactionForLunas($existing);
+            }
+        }
+
+        $row = DhkpRow::create($data);
+        return $this->syncTransactionForLunas($row);
     }
 
     public function update(DhkpRow $dhkpRow, array $data): DhkpRow
     {
         $dhkpRow->update($data);
-        return $dhkpRow->fresh();
+        return $this->syncTransactionForLunas($dhkpRow);
     }
 
     public function delete(DhkpRow $dhkpRow): bool
     {
+        if ($dhkpRow->transaksi_id) {
+            \App\Models\TransactionRecord::where('id', $dhkpRow->transaksi_id)->delete();
+        }
         return $dhkpRow->delete();
     }
 
-    public function getSummaryKPI(int $tahun = 2026, ?string $dusunFilter = null): array
+    public function getSummaryKPI(int $tahun = 2026, ?string $dusunFilter = null, ?int $desaId = null): array
     {
-        $query = DhkpRow::where('tahun', $tahun);
+        $user = auth()->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+
+        $baseQuery = $isSuperAdmin
+            ? DhkpRow::withoutGlobalScope(TenantScope::class)->where('tahun', $tahun)
+            : DhkpRow::where('tahun', $tahun);
+
+        if ($desaId) {
+            $baseQuery->where('desa_id', $desaId);
+        }
+
+        $query = clone $baseQuery;
 
         if (!empty($dusunFilter) && $dusunFilter !== 'ALL') {
             $filterDusuns = array_map('trim', explode(',', $dusunFilter));
@@ -131,8 +215,14 @@ class DhkpRepository
 
         $byDusun = [];
         foreach ($dusuns as $dusunName) {
-            $dusunQuery = DhkpRow::where('tahun', $tahun)->where('dusun', $dusunName);
-            $targetRecord = DusunTarget::where('nama_dusun', $dusunName)->where('tahun', $tahun)->first();
+            $dusunQuery = (clone $baseQuery)->where('dusun', $dusunName);
+            $targetQuery = DusunTarget::where('nama_dusun', $dusunName)->where('tahun', $tahun);
+            if ($desaId) {
+                $targetQuery->where('desa_id', $desaId);
+            } elseif (!$isSuperAdmin && auth()->check() && auth()->user()->desa_id) {
+                $targetQuery->where('desa_id', auth()->user()->desa_id);
+            }
+            $targetRecord = $targetQuery->first();
             $ketetapanSum = (int) (clone $dusunQuery)->sum('ketetapan_pbb');
             $target = $targetRecord ? (int) $targetRecord->target_pbb : $ketetapanSum;
             if ($target === 0) {
@@ -157,9 +247,56 @@ class DhkpRepository
             ];
         }
 
+        // Group by Desa for Super Admin Multi-Tenant Rekap
+        $desas = Desa::where('status_aktif', true)->get();
+        $byDesa = [];
+
+        if ($desas->isNotEmpty()) {
+            foreach ($desas as $desaItem) {
+                $desaQuery = DhkpRow::withoutGlobalScope(TenantScope::class)
+                    ->where('tahun', $tahun)
+                    ->where('desa_id', $desaItem->id);
+
+                $target = (int) (clone $desaQuery)->sum('ketetapan_pbb');
+                $realisasi = (int) (clone $desaQuery)->where('status_bayar', 'LUNAS')->sum('ketetapan_pbb');
+                $spptCount = (clone $desaQuery)->count();
+                $desaLunas = (clone $desaQuery)->where('status_bayar', 'LUNAS')->count();
+                $desaBelum = $spptCount - $desaLunas;
+                $desaPersen = $target > 0 ? round(($realisasi / $target) * 100, 2) : 0;
+
+                $byDesa[] = [
+                    'desa_id' => $desaItem->id,
+                    'nama_desa' => $desaItem->nama_desa,
+                    'kode_desa' => $desaItem->kode_desa,
+                    'target' => $target,
+                    'realisasi' => $realisasi,
+                    'sisa_piutang' => $target - $realisasi,
+                    'total_sppt' => $spptCount,
+                    'sppt_lunas' => $desaLunas,
+                    'sppt_belum' => $desaBelum,
+                    'persentase' => $desaPersen,
+                ];
+            }
+        }
+
+        if (empty($byDesa)) {
+            $defaultDesa = auth()->check() ? auth()->user()->desa : null;
+            $byDesa[] = [
+                'desa_id' => $defaultDesa->id ?? 1,
+                'nama_desa' => $defaultDesa->nama_desa ?? 'Desa Barudua',
+                'kode_desa' => $defaultDesa->kode_desa ?? '3205120004',
+                'target' => $totalKetetapan,
+                'realisasi' => $terbayar,
+                'sisa_piutang' => $sisaPiutang,
+                'total_sppt' => $totalSppt,
+                'sppt_lunas' => $spptLunas,
+                'sppt_belum' => $spptBelum,
+                'persentase' => $persentase,
+            ];
+        }
+
         // Top Unpaid Priority List
-        $topUnpaidQuery = DhkpRow::where('tahun', $tahun)
-            ->where('status_bayar', 'BELUM_BAYAR');
+        $topUnpaidQuery = (clone $baseQuery)->where('status_bayar', 'BELUM_BAYAR');
 
         if (!empty($dusunFilter) && $dusunFilter !== 'ALL') {
             $filterDusuns = array_map('trim', explode(',', $dusunFilter));
@@ -167,6 +304,7 @@ class DhkpRepository
         }
 
         $topUnpaid = $topUnpaidQuery
+            ->with(['desa:id,nama_desa'])
             ->orderBy('ketetapan_pbb', 'desc')
             ->limit(10)
             ->get()
@@ -177,6 +315,7 @@ class DhkpRepository
                     'nama_wp' => $row->nama_wp,
                     'dusun' => $row->dusun,
                     'blok' => $row->blok,
+                    'nama_desa' => $row->desa->nama_desa ?? ($row->desa_id ? "Desa #{$row->desa_id}" : "Desa Barudua"),
                     'ketetapan_pbb' => $row->ketetapan_pbb,
                     'domisili' => $row->domisili,
                     'status_bayar' => $row->status_bayar,
@@ -194,6 +333,7 @@ class DhkpRepository
             'sppt_lunas' => $spptLunas,
             'sppt_belum' => $spptBelum,
             'by_dusun' => $byDusun,
+            'by_desa' => $byDesa,
             'top_unpaid' => $topUnpaid,
         ];
     }
@@ -209,7 +349,9 @@ class DhkpRepository
             $tahun = (int) ($data['tahun'] ?? 2026);
             $ketetapan = (int) ($data['ketetapan_pbb'] ?? 0);
             $denda = (int) ($data['denda'] ?? 0);
-            $fee = (int) ($data['fee_kolektor'] ?? (($data['domisili'] ?? '') === 'LUAR_DESA' ? 5000 : 0));
+            $enableFee = filter_var($this->settingRepository->getByKey('enable_fee_kolektor_luar_desa', true), FILTER_VALIDATE_BOOLEAN);
+            $defaultFee = $enableFee ? (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000) : 0;
+            $fee = isset($data['fee_kolektor']) ? (int) $data['fee_kolektor'] : ((($data['domisili'] ?? '') === 'LUAR_DESA') ? $defaultFee : 0);
             
             $payload = array_merge([
                 'nama_wp' => 'Tanpa Nama',
@@ -230,12 +372,19 @@ class DhkpRepository
 
             $payload['total_bayar'] = ((int) ($payload['ketetapan_pbb'] ?? 0)) + ((int) ($payload['denda'] ?? 0)) + ((int) ($payload['fee_kolektor'] ?? 0));
 
-            $existing = DhkpRow::where('nop', $payload['nop'])->where('tahun', $tahun)->first();
+            $desaId = (int) ($payload['desa_id'] ?? 1);
+            $existing = DhkpRow::withoutGlobalScope(TenantScope::class)
+                ->where('nop', $payload['nop'])
+                ->where('tahun', $tahun)
+                ->where('desa_id', $desaId)
+                ->first();
             if ($existing) {
                 $existing->update($payload);
+                $this->syncTransactionForLunas($existing);
                 $updated++;
             } else {
-                DhkpRow::create($payload);
+                $row = DhkpRow::create($payload);
+                $this->syncTransactionForLunas($row);
                 $created++;
             }
         }

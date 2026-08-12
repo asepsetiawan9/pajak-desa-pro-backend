@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DhkpRow extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $table = 'dhkp_rows';
 
     protected $fillable = [
+        'desa_id',
         'nop',
         'nama_wp',
         'alamat_wp',
@@ -49,6 +51,11 @@ class DhkpRow extends Model
             'tahun' => 'integer',
             'tanggal_bayar' => 'datetime',
         ];
+    }
+
+    public function desa()
+    {
+        return $this->belongsTo(Desa::class, 'desa_id');
     }
 
     public function kolektor()

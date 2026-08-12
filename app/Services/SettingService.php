@@ -15,8 +15,10 @@ class SettingService
         'kecamatan' => 'Malangbong',
         'kabupaten' => 'Kabupaten Garut',
         'kodeDesa' => '32.05.080.001',
+        'jabatanKades' => 'Kepala Desa',
         'namaKades' => 'Endang Yana',
         'nipKades' => '19780512 200501 1 004',
+        'jabatanPetugas' => 'Bendahara / Kolektor Utama PBB',
         'namaPetugas' => 'Kolektor PBB Desa',
         'nipPetugas' => '19850315 201002 1 002',
         'teleponDesa' => '(0262) 421001',
@@ -44,9 +46,9 @@ class SettingService
     /**
      * Mengambil seluruh pengaturan sistem terformat & bersinkronisasi dengan tipe data asli
      */
-    public function getAllSettings(): array
+    public function getAllSettings(?int $desaId = null): array
     {
-        $rawSettings = $this->settingRepository->getAll();
+        $rawSettings = $this->settingRepository->getAll($desaId);
         $merged = array_merge(self::DEFAULT_SETTINGS, $rawSettings);
 
         return $this->castSettings($merged);
@@ -55,10 +57,10 @@ class SettingService
     /**
      * Memperbarui pengaturan sistem secara masal
      */
-    public function updateSettings(array $settings): array
+    public function updateSettings(array $settings, ?int $desaId = null): array
     {
-        $this->settingRepository->setMultiple($settings);
-        return $this->getAllSettings();
+        $this->settingRepository->setMultiple($settings, $desaId);
+        return $this->getAllSettings($desaId);
     }
 
     /**

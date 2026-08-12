@@ -17,8 +17,9 @@ class ReportController extends Controller
     {
         $tahun = (int) ($request->tahun ?? 2026);
         $buku = $request->buku;
+        $desaId = $request->desa_id;
         $dusunFilter = $this->getEffectiveDusunFilter($request);
-        $data = $this->reportService->generate21ColumnReport($tahun, $dusunFilter, $buku);
+        $data = $this->reportService->generate21ColumnReport($tahun, $dusunFilter, $buku, $desaId);
 
         return response()->json([
             'success' => true,

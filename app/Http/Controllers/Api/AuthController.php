@@ -39,6 +39,7 @@ class AuthController extends Controller
             ]);
         }
 
+        $user->load('desa');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -49,12 +50,25 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
                 'user' => [
                     'id' => $user->id,
+                    'desa_id' => $user->desa_id,
                     'name' => $user->name,
                     'username' => $user->username,
                     'email' => $user->email,
                     'role' => $user->role,
                     'dusun_akses' => $user->dusun_akses,
                     'status_aktif' => $user->status_aktif,
+                    'desa' => $user->desa ? [
+                        'id' => $user->desa->id,
+                        'kode_desa' => $user->desa->kode_desa,
+                        'nama_desa' => $user->desa->nama_desa,
+                        'nama_kecamatan' => $user->desa->nama_kecamatan,
+                        'nama_kabupaten' => $user->desa->nama_kabupaten,
+                        'nama_provinsi' => $user->desa->nama_provinsi,
+                        'nama_kades' => $user->desa->nama_kades,
+                        'nip_kades' => $user->desa->nip_kades,
+                        'subdomain' => $user->desa->subdomain,
+                        'logo_path' => $user->desa->logo_path,
+                    ] : null,
                 ],
             ],
         ]);
@@ -62,9 +76,12 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
+        $user = $request->user();
+        $user->load('desa');
+
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => $user,
         ]);
     }
 

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DesaController;
 use App\Http\Controllers\Api\DhkpController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SetoranKecamatanController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
@@ -60,11 +62,28 @@ Route::prefix('v1')->group(function () {
         Route::post('/transactions/group', [TransactionController::class, 'createGroup']);
         Route::post('/transactions/ungroup', [TransactionController::class, 'dissolveGroup']);
 
+        // Setoran ke Kecamatan Routes
+        Route::get('/setoran-kecamatan/summary', [SetoranKecamatanController::class, 'summary']);
+        Route::get('/setoran-kecamatan', [SetoranKecamatanController::class, 'index']);
+        Route::get('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'show']);
+        Route::post('/setoran-kecamatan', [SetoranKecamatanController::class, 'store']);
+        Route::put('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'update']);
+        Route::post('/setoran-kecamatan/{id}/verify', [SetoranKecamatanController::class, 'verify']);
+        Route::delete('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'destroy']);
+
         // Reports Routes
         Route::get('/reports/21-column', [ReportController::class, 'report21Column']);
         Route::get('/reports/21-columns', [ReportController::class, 'report21Column']);
 
         // Settings Save Route
         Route::post('/settings', [SettingController::class, 'update']);
+
+        // Multi-Desa Management Routes (Super Admin System)
+        Route::get('/desas', [DesaController::class, 'index']);
+        Route::post('/desas', [DesaController::class, 'store']);
+        Route::get('/desas/{id}', [DesaController::class, 'show']);
+        Route::put('/desas/{id}', [DesaController::class, 'update']);
+        Route::patch('/desas/{id}/toggle-status', [DesaController::class, 'toggleStatus']);
+        Route::delete('/desas/{id}', [DesaController::class, 'destroy']);
     });
 });

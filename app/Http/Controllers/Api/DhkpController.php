@@ -56,7 +56,8 @@ class DhkpController extends Controller
     {
         $tahun = (int) ($request->tahun ?? 2026);
         $dusun = $this->getEffectiveDusunFilter($request);
-        $summary = $this->dhkpService->getKpiSummary($tahun, $dusun);
+        $desaId = $request->desa_id ? (int) $request->desa_id : null;
+        $summary = $this->dhkpService->getKpiSummary($tahun, $dusun, $desaId);
 
         return response()->json([
             'success' => true,
@@ -66,13 +67,17 @@ class DhkpController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+
         $validated = $request->validate([
             'nop' => 'required|string|max:30',
+            'desa_id' => 'nullable|integer',
             'nama_wp' => 'required|string|max:255',
             'alamat_wp' => 'nullable|string',
             'alamat_op' => 'nullable|string',
             'dusun' => 'required|string',
-            'blok' => 'required|string',
+            'blok' => 'nullable|string',
             'rt_rw' => 'nullable|string',
             'luas_bumi' => 'required|integer',
             'luas_bangunan' => 'required|integer',
@@ -85,6 +90,10 @@ class DhkpController extends Controller
             'tahun' => 'integer',
         ]);
 
+        if (!$isSuperAdmin || empty($validated['desa_id'])) {
+            $validated['desa_id'] = $user->desa_id ?? $validated['desa_id'] ?? 1;
+        }
+
         $dhkp = $this->dhkpService->createSppt($validated);
 
         return response()->json([
@@ -96,7 +105,11 @@ class DhkpController extends Controller
 
     public function update(Request $request, int $id)
     {
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+
         $validated = $request->validate([
+            'desa_id' => 'sometimes|nullable|integer',
             'nama_wp' => 'sometimes|string|max:255',
             'alamat_wp' => 'nullable|string',
             'alamat_op' => 'nullable|string',
@@ -113,6 +126,10 @@ class DhkpController extends Controller
             'domisili' => 'sometimes|string|in:DALAM_DESA,LUAR_DESA',
             'status_bayar' => 'sometimes|string|in:LUNAS,BELUM_BAYAR',
         ]);
+
+        if (!$isSuperAdmin && isset($validated['desa_id'])) {
+            unset($validated['desa_id']);
+        }
 
         $dhkp = $this->dhkpService->updateSppt($id, $validated);
 
@@ -136,12 +153,21 @@ class DhkpController extends Controller
 
     public function import(Request $request)
     {
+        $user = $request->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
         $rows = $request->input('rows', []);
         if (!is_array($rows) || empty($rows)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tidak ada data baris yang diimport.',
             ], 422);
+        }
+
+        // Auto-bind desa_id to every row for multi-tenant isolation
+        foreach ($rows as &$row) {
+            if (!$isSuperAdmin || empty($row['desa_id'])) {
+                $row['desa_id'] = $user->desa_id ?? $row['desa_id'] ?? 1;
+            }
         }
 
         $result = $this->dhkpService->importSppt($rows);

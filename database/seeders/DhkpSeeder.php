@@ -36,7 +36,7 @@ class DhkpSeeder extends Seeder
         $kolektorBalok = User::where('username', 'kolektor.balok')->first()?->id ?? 3;
         $kolektorCideres = User::where('username', 'kolektor.cideres')->first()?->id ?? 4;
         $kolektorPuncak = User::where('username', 'kolektor.puncak')->first()?->id ?? 5;
-        $bendahara = User::where('username', 'bendahara.pbb')->first()?->id ?? 2;
+        $adminDesa = User::where('username', 'admin.desa')->first()?->id ?? 2;
 
         $firstNames = [
             'H. Dedi', 'Hj. Neneh', 'Maman', 'Cecep', 'Euis', 'Ir. Totong', 'Asep', 'Deden', 'Ujang', 'Yayan',
@@ -154,6 +154,13 @@ class DhkpSeeder extends Seeder
                 $tanggalBayar = null;
                 $transaksiId = null;
 
+                $currentDesaId = 1;
+                if ($dusunName === 'Puncak Sari') {
+                    $currentDesaId = 2;
+                } elseif ($dusunName === 'Cipedes') {
+                    $currentDesaId = 3;
+                }
+
                 if ($isLunas) {
                     // Spread payment dates from Jan 15 to Aug 05, 2026
                     $daysAgo = ($i * 2) % 200;
@@ -166,9 +173,10 @@ class DhkpSeeder extends Seeder
                         $method = $paymentMethods[$i % count($paymentMethods)];
 
                         $transaction = TransactionRecord::create([
+                            'desa_id' => $currentDesaId,
                             'nomor_stts' => $sttsNum,
                             'tanggal_transaksi' => $tanggalBayar,
-                            'operator_id' => ($i % 7 === 0) ? $bendahara : $collectorId,
+                            'operator_id' => ($i % 7 === 0) ? $adminDesa : $collectorId,
                             'total_pokok' => $ketetapanPbb,
                             'total_denda' => $denda,
                             'total_fee' => $feeKolektor,
@@ -193,9 +201,8 @@ class DhkpSeeder extends Seeder
                     }
                 }
 
-                $totalBayarRow = $ketetapanPbb + $denda + $feeKolektor;
-
                 DhkpRow::create([
+                    'desa_id' => $currentDesaId,
                     'nop' => $nop,
                     'nama_wp' => $namaWp,
                     'alamat_wp' => $alamatWp,
@@ -210,7 +217,7 @@ class DhkpSeeder extends Seeder
                     'ketetapan_pbb' => $ketetapanPbb,
                     'denda' => $denda,
                     'fee_kolektor' => $feeKolektor,
-                    'total_bayar' => $totalBayarRow,
+                    'total_bayar' => $ketetapanPbb + $denda + $feeKolektor,
                     'status_bayar' => $statusBayar,
                     'domisili' => $domisili,
                     'tanggal_bayar' => $tanggalBayar,
@@ -225,6 +232,7 @@ class DhkpSeeder extends Seeder
         $sampleLunas = DhkpRow::where('status_bayar', 'LUNAS')->take(2)->get();
         if ($sampleLunas->count() >= 2) {
             $voidTx = TransactionRecord::create([
+                'desa_id' => 1,
                 'nomor_stts' => 'STTS-20260710-9999',
                 'tanggal_transaksi' => '2026-07-10 14:00:00',
                 'operator_id' => $kolektorBalok,
@@ -236,7 +244,7 @@ class DhkpSeeder extends Seeder
                 'status_void' => true,
                 'void_reason' => 'Salah input NOP warganet',
                 'void_at' => '2026-07-10 16:30:00',
-                'void_by' => $bendahara,
+                'void_by' => $adminDesa,
             ]);
         }
 
@@ -249,7 +257,7 @@ class DhkpSeeder extends Seeder
             $targetPbb = (int) (ceil(($totalKetetapan * 1.05) / 100000) * 100000);
 
             DusunTarget::updateOrCreate(
-                ['nama_dusun' => $dusunName, 'tahun' => 2026],
+                ['desa_id' => 1, 'nama_dusun' => $dusunName, 'tahun' => 2026],
                 [
                     'target_pbb' => $targetPbb,
                     'realisasi_pbb' => (int) $totalRealisasi,

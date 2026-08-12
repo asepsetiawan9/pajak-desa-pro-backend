@@ -13,9 +13,21 @@ class SettingController extends Controller
     /**
      * Mengambil daftar pengaturan sistem lengkap
      */
-    public function index()
+    public function index(Request $request)
     {
-        $settings = $this->settingService->getAllSettings();
+        $desaId = null;
+        $user = auth()->user();
+        $isSuperAdmin = $user && (
+            $user->role === 'SUPER_ADMIN_SYSTEM' ||
+            $user->role === 'SUPER_ADMIN' ||
+            is_null($user->desa_id)
+        );
+
+        if ($isSuperAdmin && $request->has('desa_id') && $request->input('desa_id') !== 'all' && $request->input('desa_id') !== 'ALL') {
+            $desaId = (int) $request->input('desa_id');
+        }
+
+        $settings = $this->settingService->getAllSettings($desaId);
 
         return response()->json([
             'success' => true,
@@ -30,7 +42,9 @@ class SettingController extends Controller
     {
         $settingsData = $request->input('settings');
         if (!is_array($settingsData)) {
-            $settingsData = $request->except(['_token', '_method']);
+            $settingsData = $request->except(['_token', '_method', 'desa_id']);
+        } else {
+            unset($settingsData['desa_id']);
         }
 
         if (empty($settingsData)) {
@@ -40,7 +54,19 @@ class SettingController extends Controller
             ], 422);
         }
 
-        $updated = $this->settingService->updateSettings($settingsData);
+        $desaId = null;
+        $user = auth()->user();
+        $isSuperAdmin = $user && (
+            $user->role === 'SUPER_ADMIN_SYSTEM' ||
+            $user->role === 'SUPER_ADMIN' ||
+            is_null($user->desa_id)
+        );
+
+        if ($isSuperAdmin && $request->has('desa_id') && $request->input('desa_id') !== 'all' && $request->input('desa_id') !== 'ALL') {
+            $desaId = (int) $request->input('desa_id');
+        }
+
+        $updated = $this->settingService->updateSettings($settingsData, $desaId);
 
         return response()->json([
             'success' => true,

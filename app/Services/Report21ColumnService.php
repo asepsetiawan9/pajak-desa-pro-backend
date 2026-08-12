@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\DhkpRow;
 use App\Models\DusunTarget;
+use App\Scopes\TenantScope;
 use Illuminate\Support\Facades\DB;
 
 class Report21ColumnService
@@ -11,9 +12,26 @@ class Report21ColumnService
     /**
      * Membangun Agregasi Laporan 21-Kolom Resmi Per Dusun/Blok
      */
-    public function generate21ColumnReport(int $tahun = 2026, ?string $dusunFilter = null, ?string $bukuFilter = null): array
+    public function generate21ColumnReport(int $tahun = 2026, ?string $dusunFilter = null, ?string $bukuFilter = null, ?string $desaId = null): array
     {
-        $queryBase = DhkpRow::where('tahun', $tahun);
+        $user = auth()->user();
+        $isSuperAdmin = $user && (
+            $user->role === 'SUPER_ADMIN_SYSTEM' ||
+            $user->role === 'SUPER_ADMIN' ||
+            is_null($user->desa_id)
+        );
+
+        // Super Admin: bypass TenantScope + eager load desa
+        $queryBase = $isSuperAdmin
+            ? DhkpRow::withoutGlobalScope(TenantScope::class)
+                ->with(['desa:id,nama_desa,kode_desa'])
+                ->where('tahun', $tahun)
+            : DhkpRow::where('tahun', $tahun);
+
+        // Filter desa_id jika Super Admin memilih desa tertentu
+        if (!empty($desaId) && strtoupper($desaId) !== 'ALL' && strtoupper($desaId) !== 'all') {
+            $queryBase->where('desa_id', $desaId);
+        }
 
         if (!empty($bukuFilter) && strtoupper($bukuFilter) !== 'SEMUA' && strtoupper($bukuFilter) !== 'ALL') {
             $bukuUpper = strtoupper(trim($bukuFilter));
@@ -30,22 +48,40 @@ class Report21ColumnService
             }
         }
 
-        $dusuns = (clone $queryBase)
+        $rawDusuns = (clone $queryBase)
             ->whereNotNull('dusun')
-            ->distinct()
+            ->where('dusun', '!=', '')
             ->pluck('dusun')
             ->filter()
             ->values()
             ->toArray();
 
-        if (empty($dusuns)) {
-            $dusuns = DhkpRow::whereNotNull('dusun')
-                ->distinct()
+        if (empty($rawDusuns)) {
+            $fallbackQuery = $isSuperAdmin
+                ? DhkpRow::withoutGlobalScope(TenantScope::class)->whereNotNull('dusun')->where('dusun', '!=', '')
+                : DhkpRow::whereNotNull('dusun')->where('dusun', '!=', '');
+
+            if (!empty($desaId) && strtoupper($desaId) !== 'ALL' && strtoupper($desaId) !== 'all') {
+                $fallbackQuery->where('desa_id', $desaId);
+            }
+
+            $rawDusuns = $fallbackQuery
                 ->pluck('dusun')
                 ->filter()
                 ->values()
                 ->toArray();
         }
+
+        // Case-insensitive unique dusun list
+        $dusunsMap = [];
+        foreach ($rawDusuns as $d) {
+            $trimmed = trim($d);
+            $upper = strtoupper($trimmed);
+            if (!isset($dusunsMap[$upper])) {
+                $dusunsMap[$upper] = $trimmed;
+            }
+        }
+        $dusuns = array_values($dusunsMap);
 
         if (!empty($dusunFilter) && strtoupper($dusunFilter) !== 'ALL') {
             $filterDusuns = array_map('strtoupper', array_map('trim', explode(',', $dusunFilter)));
@@ -62,7 +98,7 @@ class Report21ColumnService
         $totalRealisasiSpptDesa = 0;
 
         foreach ($dusuns as $index => $dusun) {
-            $rows = (clone $queryBase)->where('dusun', $dusun)->get();
+            $rows = (clone $queryBase)->whereRaw('UPPER(TRIM(dusun)) = ?', [strtoupper(trim($dusun))])->get();
 
             $spptKetetapan = $rows->count();
             $pokokKetetapan = (int) $rows->sum('ketetapan_pbb');

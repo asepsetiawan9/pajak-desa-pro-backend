@@ -12,6 +12,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
+        'desa_id',
         'name',
         'username',
         'nip',
@@ -22,6 +23,11 @@ class User extends Authenticatable
         'dusun_akses',
         'status_aktif',
     ];
+
+    public function desa()
+    {
+        return $this->belongsTo(Desa::class, 'desa_id');
+    }
 
     protected $hidden = [
         'password',

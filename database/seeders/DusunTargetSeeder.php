@@ -18,8 +18,8 @@ class DusunTargetSeeder extends Seeder
 
         foreach ($targets as $target) {
             DusunTarget::updateOrCreate(
-                ['nama_dusun' => $target['nama_dusun'], 'tahun' => $target['tahun']],
-                $target
+                ['desa_id' => 1, 'nama_dusun' => $target['nama_dusun'], 'tahun' => $target['tahun']],
+                array_merge(['desa_id' => 1], $target)
             );
         }
     }

@@ -1,1878 +1,2268 @@
 {
-	"info": {
-		"_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-		"name": "LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API (v1)",
-		"description": "Koleksi Endpoint RESTful API v1 lengkap dengan request examples, post-response scripts (auto save Bearer Token), serta mock response structure untuk pengujian oleh Tim Developer / Programmer.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "01. Authentication",
-			"item": [
-				{
-					"name": "1. Login Super Admin",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
-									"    pm.environment.set('token', jsonData.data.access_token);",
-									"    pm.collectionVariables.set('token', jsonData.data.access_token);",
-									"    console.log('Token successfully set in environment: ' + jsonData.data.access_token);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"admin.desa\",\n  \"password\": \"admin123\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "Autentikasi masuk pengguna dengan kredensial username & password. Jika berhasil, token Sanctum akan disimpan otomatis ke environment variable `token`."
-					},
-					"response": [
-						{
-							"name": "200 OK - Successful Login",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"username\": \"admin.desa\",\n  \"password\": \"admin123\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/auth/login",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"auth",
-										"login"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"1|laravel_sanctum_token_example_abcdef123456\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"email\": \"admin@barudua.desa.id\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    }\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "2. Login Kolektor (BALOK, CIDERES)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"if (jsonData.success && jsonData.data && jsonData.data.access_token) {",
-									"    pm.environment.set('token', jsonData.data.access_token);",
-									"    console.log('Collector Token set: ' + jsonData.data.access_token);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"kolektor.balok\",\n  \"password\": \"password123\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "Login sebagai Kolektor untuk menguji penyaringan data berbasis multi-dusun (`dusun_akses`: BALOK, CIDERES)."
-					},
-					"response": [
-						{
-							"name": "200 OK - Collector Login",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"username\": \"kolektor.balok\",\n  \"password\": \"password123\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/auth/login",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"auth",
-										"login"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Login berhasil\",\n  \"data\": {\n    \"access_token\": \"3|laravel_sanctum_collector_token_987654321\",\n    \"token_type\": \"Bearer\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"email\": \"deden@barudua.desa.id\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "3. Get User Profile (Me)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/auth/me",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"me"
-							]
-						},
-						"description": "Mengambil data profil user yang sedang aktif berdasarkan token Bearer."
-					},
-					"response": [
-						{
-							"name": "200 OK - Current User",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/auth/me",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"auth",
-										"me"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Asep Setiawan, S.Kom\",\n    \"username\": \"admin.desa\",\n    \"nip\": \"19880512 201201 1 004\",\n    \"email\": \"admin@barudua.desa.id\",\n    \"phone\": \"081234567890\",\n    \"role\": \"SUPER_ADMIN\",\n    \"dusun_akses\": \"ALL\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-05T00:00:00.000000Z\",\n    \"updated_at\": \"2026-08-05T00:00:00.000000Z\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "4. Logout",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/auth/logout",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"logout"
-							]
-						},
-						"description": "Menghapus token autentikasi aktif."
-					},
-					"response": [
-						{
-							"name": "200 OK - Logout Successful",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/auth/logout",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"auth",
-										"logout"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Logout berhasil\"\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "02. User Management (RBAC)",
-			"item": [
-				{
-					"name": "1. List Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/users?role=KOLEKTOR",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users"
-							],
-							"query": [
-								{
-									"key": "role",
-									"value": "KOLEKTOR",
-									"description": "Filter opsional berdasarkan Role (SUPER_ADMIN, BENDAHARA, KOLEKTOR, KEPALA_DESA)"
-								},
-								{
-									"key": "search",
-									"value": "Deden",
-									"disabled": true,
-									"description": "Filter pencarian nama/username"
-								}
-							]
-						},
-						"description": "Mengambil daftar seluruh pengguna sistem dengan opsi filter."
-					},
-					"response": [
-						{
-							"name": "200 OK - Users List",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/users",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"users"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Asep Setiawan, S.Kom\",\n      \"username\": \"admin.desa\",\n      \"nip\": \"19880512 201201 1 004\",\n      \"email\": \"admin@barudua.desa.id\",\n      \"phone\": \"081234567890\",\n      \"role\": \"SUPER_ADMIN\",\n      \"dusun_akses\": \"ALL\",\n      \"status_aktif\": true\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Deden Sudrajat\",\n      \"username\": \"kolektor.balok\",\n      \"nip\": \"-\",\n      \"email\": \"deden@barudua.desa.id\",\n      \"phone\": \"085712349876\",\n      \"role\": \"KOLEKTOR\",\n      \"dusun_akses\": \"BALOK, CIDERES\",\n      \"status_aktif\": true\n    }\n  ]\n}"
-						}
-					]
-				},
-				{
-					"name": "2. Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@barudua.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Menambahkan akun pengguna baru ke dalam sistem."
-					},
-					"response": [
-						{
-							"name": "201 Created - User Created",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Budi Santoso\",\n  \"username\": \"budi.kolektor\",\n  \"nip\": \"199501012020011002\",\n  \"email\": \"budi@barudua.desa.id\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\",\n  \"role\": \"KOLEKTOR\",\n  \"dusun_akses\": \"BALOK, CIDERES\",\n  \"status_aktif\": true\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/users",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"users"
-									]
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengguna berhasil ditambahkan\",\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budi.kolektor\",\n    \"nip\": \"199501012020011002\",\n    \"email\": \"budi@barudua.desa.id\",\n    \"phone\": \"081234567899\",\n    \"role\": \"KOLEKTOR\",\n    \"dusun_akses\": \"BALOK, CIDERES\",\n    \"status_aktif\": true,\n    \"created_at\": \"2026-08-06T08:47:00.000000Z\",\n    \"updated_at\": \"2026-08-06T08:47:00.000000Z\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "3. Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Budi Santoso, S.AP\",\n  \"dusun_akses\": \"BALOK, CIDERES, CIKAJANG\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users/6",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"6"
-							]
-						},
-						"description": "Memperbarui informasi atau dusun akses pengguna."
-					},
-					"response": [
-						{
-							"name": "200 OK - User Updated",
-							"originalRequest": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Budi Santoso, S.AP\",\n  \"dusun_akses\": \"BALOK, CIDERES, CIKAJANG\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/users/6",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"users",
-										"6"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengguna berhasil diperbarui\",\n  \"data\": {\n    \"id\": 6,\n    \"name\": \"Budi Santoso, S.AP\",\n    \"username\": \"budi.kolektor\",\n    \"role\": \"KOLEKTOR\",\n    \"dusun_akses\": \"BALOK, CIDERES, CIKAJANG\",\n    \"status_aktif\": true\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "4. Toggle User Active Status",
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/users/6/toggle-status",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"6",
-								"toggle-status"
-							]
-						},
-						"description": "Mengubah status pengguna antara Aktif dan Non-Aktif."
-					},
-					"response": [
-						{
-							"name": "200 OK - Status Toggled",
-							"originalRequest": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/users/6/toggle-status",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"users",
-										"6",
-										"toggle-status"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Status pengguna berhasil diperbarui\",\n  \"data\": {\n    \"id\": 6,\n    \"status_aktif\": false\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "5. Delete User",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/users/6",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"6"
-							]
-						},
-						"description": "Menghapus akun pengguna dari sistem."
-					},
-					"response": [
-						{
-							"name": "200 OK - User Deleted",
-							"originalRequest": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/users/6",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"users",
-										"6"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengguna berhasil dihapus\"\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "03. DHKP & Master SPPT",
-			"item": [
-				{
-					"name": "1. Get DHKP Summary (KPI Cards)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/dhkp/summary?tahun=2026",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp",
-								"summary"
-							],
-							"query": [
-								{
-									"key": "tahun",
-									"value": "2026"
-								},
-								{
-									"key": "dusun",
-									"value": "BALOK",
-									"disabled": true,
-									"description": "Otomatik tersaring untuk Kolektor"
-								}
-							]
-						},
-						"description": "Mengambil ringkasan KPI (Total SPPT, Total Ketetapan, Realisasi Bayar, Sisa Piutang, % Capaian)."
-					},
-					"response": [
-						{
-							"name": "200 OK - KPI Summary",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/dhkp/summary?tahun=2026",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp",
-										"summary"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"total_sppt\": 1250,\n    \"total_pbb\": 185000000,\n    \"total_lunas\": 650,\n    \"pbb_lunas\": 95000000,\n    \"total_belum_bayar\": 600,\n    \"pbb_belum_bayar\": 90000000,\n    \"persentase_capaian\": 51.35\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "2. List DHKP Records (Paginated)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/dhkp?page=1&limit=15&status_bayar=BELUM_BAYAR",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "15"
-								},
-								{
-									"key": "search",
-									"value": "33.02",
-									"disabled": true,
-									"description": "Cari NOP / Nama WP"
-								},
-								{
-									"key": "status_bayar",
-									"value": "BELUM_BAYAR",
-									"description": "LUNAS / BELUM_BAYAR"
-								},
-								{
-									"key": "dusun",
-									"value": "BALOK",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Mengambil data SPPT DHKP terhalaman dan dapat difilter."
-					},
-					"response": [
-						{
-							"name": "200 OK - DHKP List",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/dhkp?page=1&limit=15&status_bayar=BELUM_BAYAR",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"nop\": \"33.02.010.001.001-0001.0\",\n      \"nama_wp\": \"Sutrisno\",\n      \"alamat_wp\": \"Dusun Balok RT 01 RW 01\",\n      \"alamat_op\": \"Dusun Balok RT 01 RW 01\",\n      \"dusun\": \"BALOK\",\n      \"blok\": \"001\",\n      \"rt_rw\": \"001/001\",\n      \"luas_bumi\": 200,\n      \"luas_bangunan\": 60,\n      \"njop_bumi\": 180000000,\n      \"njop_bangunan\": 120000000,\n      \"ketetapan_pbb\": 175000,\n      \"denda\": 0,\n      \"fee_kolektor\": 3500,\n      \"domisili\": \"DALAM_DESA\",\n      \"status_bayar\": \"BELUM_BAYAR\",\n      \"tahun\": 2026\n    }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"last_page\": 84,\n    \"per_page\": 15,\n    \"total\": 1250\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "3. Get Single SPPT Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/dhkp/1",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp",
-								"1"
-							]
-						},
-						"description": "Mengambil rincian detail 1 record SPPT DHKP."
-					},
-					"response": [
-						{
-							"name": "200 OK - SPPT Detail",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/dhkp/1",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp",
-										"1"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"nop\": \"33.02.010.001.001-0001.0\",\n    \"nama_wp\": \"Sutrisno\",\n    \"alamat_wp\": \"Dusun Balok RT 01 RW 01\",\n    \"alamat_op\": \"Dusun Balok RT 01 RW 01\",\n    \"dusun\": \"BALOK\",\n    \"blok\": \"001\",\n    \"rt_rw\": \"001/001\",\n    \"luas_bumi\": 200,\n    \"luas_bangunan\": 60,\n    \"njop_bumi\": 180000000,\n    \"njop_bangunan\": 120000000,\n    \"ketetapan_pbb\": 175000,\n    \"denda\": 0,\n    \"fee_kolektor\": 3500,\n    \"domisili\": \"DALAM_DESA\",\n    \"status_bayar\": \"BELUM_BAYAR\",\n    \"tahun\": 2026\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "4. Create SPPT Record",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"nop\": \"33.02.010.001.001-0999.0\",\n  \"nama_wp\": \"Siti Aminah\",\n  \"alamat_wp\": \"Dusun Balok RT 01 RW 02\",\n  \"alamat_op\": \"Dusun Balok RT 01 RW 02\",\n  \"dusun\": \"BALOK\",\n  \"blok\": \"001\",\n  \"rt_rw\": \"001/002\",\n  \"luas_bumi\": 150,\n  \"luas_bangunan\": 45,\n  \"njop_bumi\": 150000000,\n  \"njop_bangunan\": 90000000,\n  \"ketetapan_pbb\": 125000,\n  \"denda\": 0,\n  \"fee_kolektor\": 2500,\n  \"domisili\": \"DALAM_DESA\",\n  \"tahun\": 2026\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/dhkp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp"
-							]
-						},
-						"description": "Menambahkan data SPPT DHKP baru secara manual."
-					},
-					"response": [
-						{
-							"name": "201 Created - SPPT Created",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"nop\": \"33.02.010.001.001-0999.0\",\n  \"nama_wp\": \"Siti Aminah\",\n  \"dusun\": \"BALOK\",\n  \"blok\": \"001\",\n  \"luas_bumi\": 150,\n  \"luas_bangunan\": 45,\n  \"njop_bumi\": 150000000,\n  \"njop_bangunan\": 90000000,\n  \"ketetapan_pbb\": 125000\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/dhkp",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp"
-									]
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"SPPT DHKP berhasil ditambahkan\",\n  \"data\": {\n    \"id\": 1251,\n    \"nop\": \"33.02.010.001.001-0999.0\",\n    \"nama_wp\": \"Siti Aminah\",\n    \"dusun\": \"BALOK\",\n    \"status_bayar\": \"BELUM_BAYAR\",\n    \"ketetapan_pbb\": 125000\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "5. Update SPPT Record",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"nama_wp\": \"Siti Aminah, S.Pd\",\n  \"ketetapan_pbb\": 130000\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/dhkp/1251",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp",
-								"1251"
-							]
-						},
-						"description": "Memperbarui data SPPT DHKP."
-					},
-					"response": [
-						{
-							"name": "200 OK - SPPT Updated",
-							"originalRequest": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"nama_wp\": \"Siti Aminah, S.Pd\",\n  \"ketetapan_pbb\": 130000\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/dhkp/1251",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp",
-										"1251"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"SPPT DHKP berhasil diperbarui\",\n  \"data\": {\n    \"id\": 1251,\n    \"nama_wp\": \"Siti Aminah, S.Pd\",\n    \"ketetapan_pbb\": 130000\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "6. Import SPPT (Bulk Import)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"rows\": [\n    {\n      \"nop\": \"33.02.010.001.001-1000.0\",\n      \"nama_wp\": \"Ahmad Subagyo\",\n      \"dusun\": \"BALOK\",\n      \"blok\": \"002\",\n      \"luas_bumi\": 200,\n      \"luas_bangunan\": 0,\n      \"njop_bumi\": 180000000,\n      \"njop_bangunan\": 0,\n      \"ketetapan_pbb\": 150000,\n      \"domisili\": \"DALAM_DESA\"\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/dhkp/import",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp",
-								"import"
-							]
-						},
-						"description": "Mengimpor masal data SPPT dari file Excel/JSON."
-					},
-					"response": [
-						{
-							"name": "200 OK - Import Result",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"rows\": [\n    {\n      \"nop\": \"33.02.010.001.001-1000.0\",\n      \"nama_wp\": \"Ahmad Subagyo\",\n      \"dusun\": \"BALOK\",\n      \"blok\": \"002\",\n      \"luas_bumi\": 200,\n      \"luas_bangunan\": 0,\n      \"njop_bumi\": 180000000,\n      \"njop_bangunan\": 0,\n      \"ketetapan_pbb\": 150000,\n      \"domisili\": \"DALAM_DESA\"\n    }\n  ]\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/dhkp/import",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp",
-										"import"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Berhasil mengimpor 1 data SPPT DHKP (1 baru, 0 diperbarui).\",\n  \"data\": {\n    \"total\": 1,\n    \"created\": 1,\n    \"updated\": 0\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "7. Delete SPPT Record",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/dhkp/1251",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"dhkp",
-								"1251"
-							]
-						},
-						"description": "Menghapus data SPPT DHKP."
-					},
-					"response": [
-						{
-							"name": "200 OK - SPPT Deleted",
-							"originalRequest": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/dhkp/1251",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"dhkp",
-										"1251"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"SPPT DHKP berhasil dihapus\",\n  \"data\": {\n    \"id\": 1251\n  }\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "04. Transactions & Kasir STTS",
-			"item": [
-				{
-					"name": "1. List Transactions",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/transactions?page=1&limit=15",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "15"
-								},
-								{
-									"key": "search",
-									"value": "TRX",
-									"disabled": true
-								},
-								{
-									"key": "dusun",
-									"value": "BALOK",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Mengambil riwayat transaksi pembayaran STTS."
-					},
-					"response": [
-						{
-							"name": "200 OK - Transactions List",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/transactions?page=1&limit=15",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 101,\n      \"no_transaksi\": \"TRX-20260805-0001\",\n      \"dhkp_row_id\": 10,\n      \"nop\": \"33.02.010.001.001-0010.0\",\n      \"nama_wp\": \"Budi Utama\",\n      \"dusun\": \"BALOK\",\n      \"jumlah_bayar\": 125000,\n      \"denda\": 0,\n      \"fee_kolektor\": 2500,\n      \"metode_pembayaran\": \"CASH\",\n      \"operator_id\": 1,\n      \"created_at\": \"2026-08-05T10:15:30.000000Z\"\n    }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"last_page\": 5,\n    \"per_page\": 15,\n    \"total\": 75\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "2. Get Transaction Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/transactions/101",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions",
-								"101"
-							]
-						},
-						"description": "Mengambil rincian detail 1 transaksi STTS."
-					},
-					"response": [
-						{
-							"name": "200 OK - Transaction Detail",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/transactions/101",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions",
-										"101"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 101,\n    \"no_transaksi\": \"TRX-20260805-0001\",\n    \"dhkp_row_id\": 10,\n    \"nop\": \"33.02.010.001.001-0010.0\",\n    \"nama_wp\": \"Budi Utama\",\n    \"dusun\": \"BALOK\",\n    \"jumlah_bayar\": 125000,\n    \"denda\": 0,\n    \"fee_kolektor\": 2500,\n    \"metode_pembayaran\": \"CASH\",\n    \"nama_pembayar\": \"Budi Utama\",\n    \"catatan\": \"Lunas via Kasir\",\n    \"operator_id\": 1\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "3. Process Payment (Pay STTS)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"spptId\": 1,\n  \"dhkp_row_id\": 1,\n  \"jumlah_bayar\": 175000,\n  \"denda\": 0,\n  \"fee_kolektor\": 3500,\n  \"metode_pembayaran\": \"CASH\",\n  \"nama_pembayar\": \"Sutrisno\",\n  \"catatan\": \"Pembayaran lunas via Kolektor Balok\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/transactions/pay",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions",
-								"pay"
-							]
-						},
-						"description": "Memproses pembayaran SPPT PBB-P2 dan mencetak bukti STTS."
-					},
-					"response": [
-						{
-							"name": "201 Created - Payment Processed",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"spptId\": 1,\n  \"dhkp_row_id\": 1,\n  \"jumlah_bayar\": 175000,\n  \"denda\": 0,\n  \"fee_kolektor\": 3500,\n  \"metode_pembayaran\": \"CASH\",\n  \"nama_pembayar\": \"Sutrisno\",\n  \"catatan\": \"Pembayaran lunas via Kolektor Balok\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/transactions/pay",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions",
-										"pay"
-									]
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pembayaran Kasir STTS berhasil diproses\",\n  \"data\": {\n    \"id\": 102,\n    \"no_transaksi\": \"TRX-20260806-0002\",\n    \"dhkp_row_id\": 1,\n    \"jumlah_bayar\": 175000,\n    \"denda\": 0,\n    \"fee_kolektor\": 3500,\n    \"metode_pembayaran\": \"CASH\",\n    \"nama_pembayar\": \"Sutrisno\",\n    \"status\": \"SUCCESS\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "4. Void Transaction",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"reason\": \"Koreksi data pembayar oleh Operator Kasir\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/transactions/102/void",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions",
-								"102",
-								"void"
-							]
-						},
-						"description": "Membatalkan (void) transaksi STTS dan mengembalikan status SPPT menjadi BELUM_BAYAR."
-					},
-					"response": [
-						{
-							"name": "200 OK - Void Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"reason\": \"Koreksi data pembayar oleh Operator Kasir\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/transactions/102/void",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions",
-										"102",
-										"void"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Transaksi STTS berhasil di-void dan status DHKP di-rollback\",\n  \"data\": {\n    \"id\": 102,\n    \"status\": \"VOID\",\n    \"void_reason\": \"Koreksi data pembayar oleh Operator Kasir\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "5. Create 1 KK Grouping",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"trxIds\": [101, 102],\n  \"groupName\": \"Keluarga Pak RT 01\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/transactions/group",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions",
-								"group"
-							]
-						},
-						"description": "Mengelompokkan transaksi kolektif 1 Keluarga (1 KK)."
-					},
-					"response": [
-						{
-							"name": "200 OK - Group Created",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"trxIds\": [101, 102],\n  \"groupName\": \"Keluarga Pak RT 01\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/transactions/group",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions",
-										"group"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengelompokan 1 KK (Keluarga Pak RT 01) berhasil dibuat\",\n  \"data\": {\n    \"customGroupId\": \"GRP-A1B2C3\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "6. Dissolve 1 KK Grouping",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"customGroupId\": \"GRP-A1B2C3\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/transactions/ungroup",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"transactions",
-								"ungroup"
-							]
-						},
-						"description": "Membubarkan kelompok transaksi 1 KK."
-					},
-					"response": [
-						{
-							"name": "200 OK - Group Dissolved",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"customGroupId\": \"GRP-A1B2C3\"\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/transactions/ungroup",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"transactions",
-										"ungroup"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengelompokan GRP-A1B2C3 berhasil dibubarkan\",\n  \"data\": {\n    \"customGroupId\": \"GRP-A1B2C3\"\n  }\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "05. Reports (Laporan 21 Kolom)",
-			"item": [
-				{
-					"name": "1. Report 21-Column Rekapitulasi PBB-P2",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/reports/21-column?tahun=2026",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"reports",
-								"21-column"
-							],
-							"query": [
-								{
-									"key": "tahun",
-									"value": "2026"
-								},
-								{
-									"key": "dusun",
-									"value": "BALOK",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Mengambil data Laporan Rekapitulasi 21-Kolom PBB-P2 per RW/Dusun hingga Grand Total Desa."
-					},
-					"response": [
-						{
-							"name": "200 OK - Report 21 Column Data",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/reports/21-column?tahun=2026",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"reports",
-										"21-column"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"tahun\": 2026,\n    \"rows\": [\n      {\n        \"no\": 1,\n        \"wilayah\": \"Dusun Balok (RW 01)\",\n        \"sppt_target\": 350,\n        \"pbb_target\": 45000000,\n        \"sppt_realisasi\": 200,\n        \"pbb_realisasi\": 28000000,\n        \"sppt_sisa\": 150,\n        \"pbb_sisa\": 17000000,\n        \"persentase\": 62.22\n      }\n    ],\n    \"grand_total\": {\n      \"sppt_target\": 1250,\n      \"pbb_target\": 185000000,\n      \"sppt_realisasi\": 650,\n      \"pbb_realisasi\": 95000000,\n      \"sppt_sisa\": 600,\n      \"pbb_sisa\": 90000000,\n      \"persentase\": 51.35\n    }\n  }\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "06. System Settings",
-			"item": [
-				{
-					"name": "1. Get System Settings",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/settings",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"settings"
-							]
-						},
-						"description": "Mengambil seluruh data pengaturan konfigurasi sistem."
-					},
-					"response": [
-						{
-							"name": "200 OK - Settings List",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"url": {
-									"raw": "{{baseUrl}}/settings",
-									"host": [
-										"{{baseUrl}}"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"data\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5,\n    \"nama_kepala_desa\": \"Endang Yana\",\n    \"nip_kepala_desa\": \"19750804 200501 1 002\"\n  }\n}"
-						}
-					]
-				},
-				{
-					"name": "2. Update System Settings (Bulk)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/settings",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"settings"
-							]
-						},
-						"description": "Memperbarui konfigurasi sistem secara masal."
-					},
-					"response": [
-						{
-							"name": "200 OK - Settings Saved",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
-								},
-								"url": {
-									"raw": "{{baseUrl}}/settings",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"settings"
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"success\": true,\n  \"message\": \"Pengaturan sistem berhasil disimpan ke database\",\n  \"data\": {\n    \"nama_desa\": \"Desa Barudua\",\n    \"nama_kecamatan\": \"Kecamatan Malangbong\",\n    \"nama_kabupaten\": \"Kabupaten Garut\",\n    \"tahun_pajak_aktif\": \"2026\",\n    \"target_penerimaan_pbb\": 350000000,\n    \"persentase_fee_kolektor\": 2.5\n  }\n}"
-						}
-					]
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://127.0.0.1:8000/api/v1",
-			"type": "string"
-		},
-		{
-			"key": "token",
-			"value": "",
-			"type": "string"
-		}
-	]
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "name": "LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API v1",
+        "description": "Koleksi resmi REST API LENTERA (Layanan Elektronik Terpadu Pajak Daerah) v1 untuk Laravel 12 Backend, React Web App, dan Flutter Mobile App. Dilengkapi otorisasi Bearer Token Sanctum, penyaringan Multi-Desa (Multi-Tenant), Kasir STTS Single & Multi-NOP, Void Transaction, Rekapitulasi 21-Kolom, Modul Setoran PBB-P2 ke Kecamatan, serta Pengaturan Pejabat Penandatangan Dinamis.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "01. Authentication & Health",
+            "item": [
+                {
+                    "name": "0. System Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Service Healthy",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"status\": \"ok\",\n    \"service\": \"LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API\",\n    \"timestamp\": \"2026-08-12T21:30:00+07:00\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "1. Login Super Admin System",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.access_token) {",
+                                    "        pm.environment.set('token', jsonData.data.access_token);",
+                                    "        console.log('✅ Bearer Token berhasil diperbarui:', jsonData.data.access_token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"superadmin\",\n    \"password\": \"superadmin123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Login Super Admin System",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Login berhasil\",\n    \"data\": {\n        \"access_token\": \"1|sanctum_token_super_admin_system_example\",\n        \"token_type\": \"Bearer\",\n        \"user\": {\n            \"id\": 1,\n            \"name\": \"Super Admin System\",\n            \"username\": \"superadmin\",\n            \"email\": \"superadmin@lentera.id\",\n            \"role\": \"SUPER_ADMIN_SYSTEM\",\n            \"dusun_akses\": \"ALL\",\n            \"status_aktif\": true,\n            \"desa_id\": null\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Login Super Admin Desa (Admin Barudua)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.access_token) {",
+                                    "        pm.environment.set('token', jsonData.data.access_token);",
+                                    "        console.log('✅ Bearer Token berhasil diperbarui:', jsonData.data.access_token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"admin.desa\",\n    \"password\": \"admin123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Login Super Admin Desa",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Login berhasil\",\n    \"data\": {\n        \"access_token\": \"2|sanctum_token_admin_desa_example\",\n        \"token_type\": \"Bearer\",\n        \"user\": {\n            \"id\": 2,\n            \"name\": \"Asep Setiawan, S.Kom\",\n            \"username\": \"admin.desa\",\n            \"email\": \"admin@barudua.desa.id\",\n            \"role\": \"SUPER_ADMIN\",\n            \"dusun_akses\": \"ALL\",\n            \"status_aktif\": true,\n            \"desa_id\": 1\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Login Kolektor (BALOK, CIDERES)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.access_token) {",
+                                    "        pm.environment.set('token', jsonData.data.access_token);",
+                                    "        console.log('✅ Bearer Token berhasil diperbarui:', jsonData.data.access_token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"kolektor.balok\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Login Kolektor",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Login berhasil\",\n    \"data\": {\n        \"access_token\": \"3|sanctum_token_kolektor_example\",\n        \"token_type\": \"Bearer\",\n        \"user\": {\n            \"id\": 3,\n            \"name\": \"Deden Sudrajat\",\n            \"username\": \"kolektor.balok\",\n            \"email\": \"deden@barudua.desa.id\",\n            \"role\": \"KOLEKTOR\",\n            \"dusun_akses\": \"BALOK, CIDERES\",\n            \"status_aktif\": true,\n            \"desa_id\": 1\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Login Kepala Desa",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.data && jsonData.data.access_token) {",
+                                    "        pm.environment.set('token', jsonData.data.access_token);",
+                                    "        console.log('✅ Bearer Token berhasil diperbarui:', jsonData.data.access_token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"kades.barudua\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Login Kepala Desa",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Login berhasil\",\n    \"data\": {\n        \"access_token\": \"4|sanctum_token_kades_example\",\n        \"token_type\": \"Bearer\",\n        \"user\": {\n            \"id\": 6,\n            \"name\": \"Endang Yana\",\n            \"username\": \"kades.barudua\",\n            \"email\": \"kades@barudua.desa.id\",\n            \"role\": \"KEPALA_DESA\",\n            \"dusun_akses\": \"ALL\",\n            \"status_aktif\": true,\n            \"desa_id\": 1\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Get User Profile (Me)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - User Profile",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 2,\n        \"name\": \"Asep Setiawan, S.Kom\",\n        \"username\": \"admin.desa\",\n        \"nip\": \"19880512 201201 1 004\",\n        \"email\": \"admin@barudua.desa.id\",\n        \"phone\": \"081234567890\",\n        \"role\": \"SUPER_ADMIN\",\n        \"dusun_akses\": \"ALL\",\n        \"status_aktif\": true,\n        \"desa_id\": 1,\n        \"desa\": {\n            \"id\": 1,\n            \"kode_desa\": \"32.05.04.2002\",\n            \"nama_desa\": \"Desa Barudua\",\n            \"nama_kecamatan\": \"Malangbong\",\n            \"nama_kabupaten\": \"Garut\"\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Logout Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Berhasil keluar (token dicabut).\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "02. Multi-Desa Management (Super Admin System)",
+            "item": [
+                {
+                    "name": "1. List Desas",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/desas?search=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "desas"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Desas",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"kode_desa\": \"32.05.04.2002\",\n            \"nama_desa\": \"Desa Barudua\",\n            \"nama_kecamatan\": \"Malangbong\",\n            \"nama_kabupaten\": \"Garut\",\n            \"nama_provinsi\": \"Jawa Barat\",\n            \"nama_kades\": \"Endang Yana\",\n            \"nip_kades\": \"19750804 200501 1 002\",\n            \"subdomain\": \"barudua\",\n            \"status_aktif\": true,\n            \"users_count\": 5\n        },\n        {\n            \"id\": 2,\n            \"kode_desa\": \"32.05.04.2003\",\n            \"nama_desa\": \"Desa Sukamanah\",\n            \"nama_kecamatan\": \"Malangbong\",\n            \"nama_kabupaten\": \"Garut\",\n            \"nama_provinsi\": \"Jawa Barat\",\n            \"nama_kades\": \"H. Dede Mulyana\",\n            \"nip_kades\": \"19800215 200801 1 005\",\n            \"subdomain\": \"sukamanah\",\n            \"status_aktif\": true,\n            \"users_count\": 3\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Create Desa (Auto Generate Default Users)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"kode_desa\": \"32.05.04.2004\",\n    \"nama_desa\": \"Desa Cikarag\",\n    \"nama_kecamatan\": \"Malangbong\",\n    \"nama_kabupaten\": \"Garut\",\n    \"nama_provinsi\": \"Jawa Barat\",\n    \"nama_kades\": \"Ahmad Sobarna, S.IP\",\n    \"nip_kades\": \"19820310 200902 1 003\",\n    \"subdomain\": \"cikarag\",\n    \"admin_password\": \"admin123\",\n    \"default_password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/desas",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "desas"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Desa & 3 Akun Pengguna Dibuat",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Desa Desa Cikarag dan 3 akun pengguna (Admin Desa, Kolektor, Kades) berhasil dibuat!\",\n    \"data\": {\n        \"desa\": {\n            \"id\": 3,\n            \"kode_desa\": \"32.05.04.2004\",\n            \"nama_desa\": \"Desa Cikarag\",\n            \"nama_kecamatan\": \"Malangbong\",\n            \"nama_kabupaten\": \"Garut\",\n            \"nama_provinsi\": \"Jawa Barat\",\n            \"nama_kades\": \"Ahmad Sobarna, S.IP\",\n            \"nip_kades\": \"19820310 200902 1 003\",\n            \"subdomain\": \"cikarag\",\n            \"status_aktif\": true\n        },\n        \"users\": [\n            {\n                \"id\": 10,\n                \"name\": \"Admin Desa Cikarag\",\n                \"username\": \"admin.cikarag\",\n                \"role\": \"SUPER_ADMIN\"\n            },\n            {\n                \"id\": 11,\n                \"name\": \"Kolektor Desa Cikarag\",\n                \"username\": \"kolektor.cikarag\",\n                \"role\": \"KOLEKTOR\"\n            },\n            {\n                \"id\": 12,\n                \"name\": \"Ahmad Sobarna, S.IP\",\n                \"username\": \"kades.cikarag\",\n                \"role\": \"KEPALA_DESA\"\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Get Detail Desa",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/desas/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "desas",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Detail Desa",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"kode_desa\": \"32.05.04.2002\",\n        \"nama_desa\": \"Desa Barudua\",\n        \"nama_kecamatan\": \"Malangbong\",\n        \"nama_kabupaten\": \"Garut\",\n        \"nama_provinsi\": \"Jawa Barat\",\n        \"nama_kades\": \"Endang Yana\",\n        \"nip_kades\": \"19750804 200501 1 002\",\n        \"subdomain\": \"barudua\",\n        \"status_aktif\": true\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Update Desa",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama_kades\": \"Endang Yana, S.Pd\",\n    \"nip_kades\": \"19750804 200501 1 002\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/desas/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "desas",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Update Desa Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data Desa berhasil diperbarui.\",\n    \"data\": {\n        \"id\": 1,\n        \"nama_desa\": \"Desa Barudua\",\n        \"nama_kades\": \"Endang Yana, S.Pd\",\n        \"nip_kades\": \"19750804 200501 1 002\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Toggle Status Desa",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/desas/2/toggle-status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "desas",
+                                "2",
+                                "toggle-status"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Status Desa Toggled",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Status Desa Desa Sukamanah berhasil diubah.\",\n    \"data\": {\n        \"id\": 2,\n        \"nama_desa\": \"Desa Sukamanah\",\n        \"status_aktif\": false\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "03. User Management (RBAC)",
+            "item": [
+                {
+                    "name": "1. List Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users?role=KOLEKTOR&desa_id=1&search=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "role",
+                                    "value": "KOLEKTOR"
+                                },
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Users",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 3,\n            \"name\": \"Deden Sudrajat\",\n            \"username\": \"kolektor.balok\",\n            \"nip\": \"-\",\n            \"email\": \"deden@barudua.desa.id\",\n            \"phone\": \"085712349876\",\n            \"role\": \"KOLEKTOR\",\n            \"dusun_akses\": \"BALOK, CIDERES\",\n            \"status_aktif\": true,\n            \"desa_id\": 1,\n            \"desa\": {\n                \"id\": 1,\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        },\n        {\n            \"id\": 4,\n            \"name\": \"Maman Suherman\",\n            \"username\": \"kolektor.cideres\",\n            \"nip\": \"-\",\n            \"email\": \"maman@barudua.desa.id\",\n            \"phone\": \"081399887766\",\n            \"role\": \"KOLEKTOR\",\n            \"dusun_akses\": \"CIDERES\",\n            \"status_aktif\": true,\n            \"desa_id\": 1,\n            \"desa\": {\n                \"id\": 1,\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Create User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Agus Hermawan\",\n    \"username\": \"kolektor.cipedes\",\n    \"nip\": \"19920101 201801 1 009\",\n    \"email\": \"agus@barudua.desa.id\",\n    \"phone\": \"082199887766\",\n    \"password\": \"password123\",\n    \"role\": \"KOLEKTOR\",\n    \"dusun_akses\": \"CIPEDES, PUNCAK SARI\",\n    \"status_aktif\": true,\n    \"desa_id\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - User Created",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pengguna Agus Hermawan berhasil ditambahkan\",\n    \"data\": {\n        \"id\": 7,\n        \"name\": \"Agus Hermawan\",\n        \"username\": \"kolektor.cipedes\",\n        \"nip\": \"19920101 201801 1 009\",\n        \"email\": \"agus@barudua.desa.id\",\n        \"phone\": \"082199887766\",\n        \"role\": \"KOLEKTOR\",\n        \"dusun_akses\": \"CIPEDES, PUNCAK SARI\",\n        \"status_aktif\": true,\n        \"desa_id\": 1\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Update User & Penugasan Multi-Dusun",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Deden Sudrajat, S.IP\",\n    \"phone\": \"085712349999\",\n    \"dusun_akses\": \"BALOK, CIDERES, CIPEDES\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users/3",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "3"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - User Updated",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data pengguna berhasil diperbarui\",\n    \"data\": {\n        \"id\": 3,\n        \"name\": \"Deden Sudrajat, S.IP\",\n        \"phone\": \"085712349999\",\n        \"dusun_akses\": \"BALOK, CIDERES, CIPEDES\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Toggle User Active Status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/4/toggle-status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "4",
+                                "toggle-status"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Status User Toggled",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Status aktif Maman Suherman diubah menjadi Non-Aktif\",\n    \"data\": {\n        \"id\": 4,\n        \"name\": \"Maman Suherman\",\n        \"status_aktif\": false\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/7",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                "7"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Delete User Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pengguna berhasil dihapus\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "04. DHKP & Master SPPT",
+            "item": [
+                {
+                    "name": "1. Get DHKP Summary (KPI Cards & Multi-Tenant)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp/summary?desa_id=1&tahun=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp",
+                                "summary"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - DHKP KPI Summary",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"total_sppt\": 400,\n        \"total_ketetapan\": 75000000,\n        \"total_lunas\": 204,\n        \"realisasi_nominal\": 42500000,\n        \"total_piutang\": 196,\n        \"piutang_nominal\": 32500000,\n        \"persentase_capaian\": 56.67,\n        \"dusun_targets\": [\n            {\n                \"dusun\": \"BALOK\",\n                \"total_sppt\": 110,\n                \"lunas_sppt\": 65,\n                \"persentase\": 59.09\n            },\n            {\n                \"dusun\": \"CIDERES\",\n                \"total_sppt\": 100,\n                \"lunas_sppt\": 55,\n                \"persentase\": 55\n            },\n            {\n                \"dusun\": \"CIPEDES\",\n                \"total_sppt\": 95,\n                \"lunas_sppt\": 44,\n                \"persentase\": 46.32\n            },\n            {\n                \"dusun\": \"PUNCAK SARI\",\n                \"total_sppt\": 95,\n                \"lunas_sppt\": 40,\n                \"persentase\": 42.11\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. List DHKP Records (Paginated & Multi-Filter)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp?desa_id=1&page=1&limit=15&status_bayar=BELUM_BAYAR&dusun=BALOK&tahun=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "15"
+                                },
+                                {
+                                    "key": "status_bayar",
+                                    "value": "BELUM_BAYAR"
+                                },
+                                {
+                                    "key": "dusun",
+                                    "value": "BALOK"
+                                },
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List DHKP Records",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"desa_id\": 1,\n            \"nop\": \"32.05.040.002.001-0001.0\",\n            \"nama_wp\": \"Sutrisno\",\n            \"alamat_wp\": \"Dusun Balok RT 01\\/RW 02\",\n            \"alamat_op\": \"Dusun Balok\",\n            \"dusun\": \"BALOK\",\n            \"luas_bumi\": 250,\n            \"luas_bangunan\": 100,\n            \"ketetapan_pbb\": 175000,\n            \"denda\": 0,\n            \"status_bayar\": \"BELUM_BAYAR\",\n            \"domisili\": \"DALAM_DESA\",\n            \"tahun\": 2026\n        }\n    ],\n    \"meta\": {\n        \"current_page\": 1,\n        \"last_page\": 3,\n        \"per_page\": 15,\n        \"total\": 45\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Get Single SPPT Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Detail SPPT",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nop\": \"32.05.040.002.001-0001.0\",\n        \"nama_wp\": \"Sutrisno\",\n        \"alamat_wp\": \"Dusun Balok RT 01\\/RW 02\",\n        \"alamat_op\": \"Dusun Balok\",\n        \"dusun\": \"BALOK\",\n        \"luas_bumi\": 250,\n        \"luas_bangunan\": 100,\n        \"ketetapan_pbb\": 175000,\n        \"denda\": 0,\n        \"status_bayar\": \"BELUM_BAYAR\",\n        \"domisili\": \"DALAM_DESA\",\n        \"tahun\": 2026,\n        \"desa\": {\n            \"id\": 1,\n            \"nama_desa\": \"Desa Barudua\"\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Create SPPT Record",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"desa_id\": 1,\n    \"nop\": \"32.05.040.002.001-0999.0\",\n    \"nama_wp\": \"Bambang Trihatmodjo\",\n    \"alamat_wp\": \"Dusun Cideres RT 03\\/RW 01\",\n    \"alamat_op\": \"Dusun Cideres\",\n    \"dusun\": \"CIDERES\",\n    \"luas_bumi\": 300,\n    \"luas_bangunan\": 120,\n    \"ketetapan_pbb\": 250000,\n    \"denda\": 0,\n    \"status_bayar\": \"BELUM_BAYAR\",\n    \"domisili\": \"DALAM_DESA\",\n    \"tahun\": 2026\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - SPPT Created",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data SPPT DHKP berhasil ditambahkan\",\n    \"data\": {\n        \"id\": 401,\n        \"desa_id\": 1,\n        \"nop\": \"32.05.040.002.001-0999.0\",\n        \"nama_wp\": \"Bambang Trihatmodjo\",\n        \"ketetapan_pbb\": 250000,\n        \"status_bayar\": \"BELUM_BAYAR\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Update SPPT Record",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama_wp\": \"Bambang Trihatmodjo, S.H.\",\n    \"ketetapan_pbb\": 260000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp/401",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp",
+                                "401"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - SPPT Updated",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data SPPT DHKP berhasil diperbarui\",\n    \"data\": {\n        \"id\": 401,\n        \"nama_wp\": \"Bambang Trihatmodjo, S.H.\",\n        \"ketetapan_pbb\": 260000\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. Import SPPT (Bulk Import Excel/CSV)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"desa_id\": 1,\n    \"rows\": [\n        {\n            \"nop\": \"32.05.040.002.001-0888.0\",\n            \"nama_wp\": \"H. Suherman\",\n            \"alamat_wp\": \"Dusun Balok\",\n            \"alamat_op\": \"Dusun Balok\",\n            \"dusun\": \"BALOK\",\n            \"luas_bumi\": 200,\n            \"luas_bangunan\": 90,\n            \"ketetapan_pbb\": 150000,\n            \"status_bayar\": \"BELUM_BAYAR\",\n            \"domisili\": \"DALAM_DESA\",\n            \"tahun\": 2026\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp/import",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp",
+                                "import"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Bulk Import Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Berhasil memproses 1 data SPPT DHKP\",\n    \"data\": {\n        \"inserted\": 1,\n        \"updated\": 0\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "7. Delete SPPT Record",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dhkp/401",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dhkp",
+                                "401"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Delete SPPT Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data SPPT DHKP berhasil dihapus\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "05. Transactions & Kasir STTS",
+            "item": [
+                {
+                    "name": "1. List Transactions (Paginated & Multi-Tenant)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions?desa_id=1&page=1&limit=15&tahun=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "15"
+                                },
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Transactions",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 101,\n            \"desa_id\": 1,\n            \"nomor_stts\": \"STTS-20260812-A1B2\",\n            \"tanggal_transaksi\": \"2026-08-12 14:20:00\",\n            \"operator_id\": 3,\n            \"total_pokok\": 175000,\n            \"total_denda\": 0,\n            \"total_fee\": 0,\n            \"total_bayar\": 175000,\n            \"metode_pembayaran\": \"CASH\",\n            \"status_void\": false,\n            \"operator\": {\n                \"id\": 3,\n                \"name\": \"Deden Sudrajat\"\n            }\n        }\n    ],\n    \"meta\": {\n        \"current_page\": 1,\n        \"last_page\": 14,\n        \"per_page\": 15,\n        \"total\": 204\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Get Transaction Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/101",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "101"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Detail Transaction",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 101,\n        \"desa_id\": 1,\n        \"nomor_stts\": \"STTS-20260812-A1B2\",\n        \"tanggal_transaksi\": \"2026-08-12 14:20:00\",\n        \"operator_id\": 3,\n        \"total_pokok\": 175000,\n        \"total_denda\": 0,\n        \"total_fee\": 0,\n        \"total_bayar\": 175000,\n        \"metode_pembayaran\": \"CASH\",\n        \"status_void\": false,\n        \"dhkp_rows\": [\n            {\n                \"id\": 1,\n                \"nop\": \"32.05.040.002.001-0001.0\",\n                \"nama_wp\": \"Sutrisno\",\n                \"ketetapan_pbb\": 175000,\n                \"status_bayar\": \"LUNAS\"\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Process Payment Single NOP (Pay STTS)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"dhkp_id\": 1,\n    \"nop\": \"32.05.040.002.001-0001.0\",\n    \"metode_pembayaran\": \"CASH\",\n    \"tahun\": 2026,\n    \"metadata_kk\": {\n        \"uang_dibayar\": 200000,\n        \"kembalian\": 25000,\n        \"petugas\": \"Deden Sudrajat\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/pay",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "pay"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Single Payment Success",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pembayaran Kasir STTS berhasil diproses\",\n    \"data\": {\n        \"id\": 102,\n        \"nomor_stts\": \"STTS-20260812-C3D4\",\n        \"tanggal_transaksi\": \"2026-08-12T21:30:00.000000Z\",\n        \"operator_id\": 3,\n        \"total_pokok\": 175000,\n        \"total_denda\": 0,\n        \"total_fee\": 0,\n        \"total_bayar\": 175000,\n        \"metode_pembayaran\": \"CASH\",\n        \"status_void\": false\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Process Payment Multi-NOP (Kolektif 1 KK / Luar Desa)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"dhkp_ids\": [\n        1,\n        2,\n        3\n    ],\n    \"nops\": [\n        \"32.05.040.002.001-0001.0\",\n        \"32.05.040.002.001-0002.0\",\n        \"32.05.040.002.001-0003.0\"\n    ],\n    \"metode_pembayaran\": \"CASH\",\n    \"tahun\": 2026,\n    \"metadata_kk\": {\n        \"nama_kk\": \"Kel. Sutrisno\",\n        \"uang_dibayar\": 500000,\n        \"kembalian\": 75000,\n        \"petugas\": \"Deden Sudrajat\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/pay",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "pay"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Multi-NOP Payment Success",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pembayaran Kasir STTS berhasil diproses\",\n    \"data\": {\n        \"id\": 103,\n        \"nomor_stts\": \"STTS-20260812-E5F6\",\n        \"tanggal_transaksi\": \"2026-08-12T21:32:00.000000Z\",\n        \"operator_id\": 3,\n        \"total_pokok\": 420000,\n        \"total_denda\": 0,\n        \"total_fee\": 5000,\n        \"total_bayar\": 425000,\n        \"metode_pembayaran\": \"CASH\",\n        \"status_void\": false,\n        \"dhkp_rows\": [\n            {\n                \"id\": 1,\n                \"nop\": \"32.05.040.002.001-0001.0\",\n                \"nama_wp\": \"Sutrisno\",\n                \"status_bayar\": \"LUNAS\"\n            },\n            {\n                \"id\": 2,\n                \"nop\": \"32.05.040.002.001-0002.0\",\n                \"nama_wp\": \"Siti Aminah\",\n                \"status_bayar\": \"LUNAS\"\n            },\n            {\n                \"id\": 3,\n                \"nop\": \"32.05.040.002.001-0003.0\",\n                \"nama_wp\": \"Budi Santoso\",\n                \"status_bayar\": \"LUNAS\"\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Void Transaction (Rollback Status DHKP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"Salah input nominal oleh operator kasir\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/102/void",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "102",
+                                "void"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Void Transaction Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Transaksi STTS berhasil di-void dan status DHKP di-rollback\",\n    \"data\": {\n        \"id\": 102,\n        \"nomor_stts\": \"STTS-20260812-C3D4\",\n        \"status_void\": true,\n        \"void_reason\": \"Salah input nominal oleh operator kasir\",\n        \"void_at\": \"2026-08-12 21:35:00\",\n        \"void_by\": 2\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. Create 1 KK Grouping",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"trxIds\": [\n        101,\n        102\n    ],\n    \"groupName\": \"Keluarga Sutrisno\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/group",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "group"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Group Created",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pengelompokan 1 KK (Keluarga Sutrisno) berhasil dibuat\",\n    \"data\": {\n        \"customGroupId\": \"GRP-A8B9C0\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "7. Dissolve 1 KK Grouping",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"customGroupId\": \"GRP-A8B9C0\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transactions/ungroup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transactions",
+                                "ungroup"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Group Dissolved",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pengelompokan GRP-A8B9C0 berhasil dibubarkan\",\n    \"data\": {\n        \"customGroupId\": \"GRP-A8B9C0\"\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "06. Reports (Laporan 21 Kolom)",
+            "item": [
+                {
+                    "name": "1. Report 21-Column Rekapitulasi PBB-P2 (Per Dusun & Grand Total)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/reports/21-column?desa_id=1&tahun=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "reports",
+                                "21-column"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Report 21 Column",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"desa_id\": 1,\n        \"nama_desa\": \"Desa Barudua\",\n        \"tahun\": 2026,\n        \"rows\": [\n            {\n                \"dusun\": \"BALOK\",\n                \"pokok_sppt\": 110,\n                \"pokok_rp\": 22500000,\n                \"realisasi_sppt\": 65,\n                \"realisasi_rp\": 13275000,\n                \"piutang_sppt\": 45,\n                \"piutang_rp\": 9225000,\n                \"persen_capaian\": 59\n            },\n            {\n                \"dusun\": \"CIDERES\",\n                \"pokok_sppt\": 100,\n                \"pokok_rp\": 18500000,\n                \"realisasi_sppt\": 55,\n                \"realisasi_rp\": 10175000,\n                \"piutang_sppt\": 45,\n                \"piutang_rp\": 8325000,\n                \"persen_capaian\": 55\n            }\n        ],\n        \"grand_total\": {\n            \"total_pokok_sppt\": 400,\n            \"total_pokok_rp\": 75000000,\n            \"total_realisasi_sppt\": 204,\n            \"total_realisasi_rp\": 42500000,\n            \"total_piutang_sppt\": 196,\n            \"total_piutang_rp\": 32500000,\n            \"total_persen_capaian\": 56.67\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Report 21-Column Filtered by Buku (Buku 1: <= 100k)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/reports/21-column?desa_id=1&tahun=2026&buku=Buku%201",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "reports",
+                                "21-column"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                },
+                                {
+                                    "key": "buku",
+                                    "value": "Buku 1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Report 21 Column Buku 1",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"desa_id\": 1,\n        \"buku\": \"Buku 1\",\n        \"tahun\": 2026,\n        \"rows\": [\n            {\n                \"dusun\": \"BALOK\",\n                \"pokok_sppt\": 80,\n                \"pokok_rp\": 4800000,\n                \"realisasi_sppt\": 50,\n                \"realisasi_rp\": 3000000,\n                \"piutang_sppt\": 30,\n                \"piutang_rp\": 1800000,\n                \"persen_capaian\": 62.5\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "07. System Settings",
+            "item": [
+                {
+                    "name": "1. Get System Settings (Per Desa / Multi-Tenant)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/settings?desa_id=1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "settings"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - System Settings",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"namaDesa\": \"Desa Barudua\",\n        \"kodeDesa\": \"32.05.04.2002\",\n        \"namaKecamatan\": \"Malangbong\",\n        \"namaKabupaten\": \"Garut\",\n        \"namaProvinsi\": \"Jawa Barat\",\n        \"namaKades\": \"Endang Yana\",\n        \"nipKades\": \"19750804 200501 1 002\",\n        \"namaPetugas\": \"Asep Setiawan, S.Kom\",\n        \"nipPetugas\": \"19880512 201201 1 004\",\n        \"jabatanKades\": \"Kepala Desa Barudua\",\n        \"jabatanPetugas\": \"Bendahara \\/ Kolektor Utama PBB\",\n        \"enable_fee_kolektor_luar_desa\": true,\n        \"fee_kolektor_luar_desa\": 5000,\n        \"tahunPajak\": 2026\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Update System Settings (Bulk & Fleksibel Signatories)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"desa_id\": 1,\n    \"settings\": {\n        \"namaKades\": \"Endang Yana, S.Pd\",\n        \"nipKades\": \"19750804 200501 1 002\",\n        \"jabatanKades\": \"Kepala Desa Barudua\",\n        \"namaPetugas\": \"Asep Setiawan, S.Kom\",\n        \"nipPetugas\": \"19880512 201201 1 004\",\n        \"jabatanPetugas\": \"Bendahara PBB-P2\",\n        \"enable_fee_kolektor_luar_desa\": true,\n        \"fee_kolektor_luar_desa\": 5000\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/settings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "settings"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Update Settings Success",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Pengaturan sistem berhasil diperbarui.\",\n    \"data\": {\n        \"namaKades\": \"Endang Yana, S.Pd\",\n        \"jabatanKades\": \"Kepala Desa Barudua\",\n        \"namaPetugas\": \"Asep Setiawan, S.Kom\",\n        \"jabatanPetugas\": \"Bendahara PBB-P2\",\n        \"enable_fee_kolektor_luar_desa\": true,\n        \"fee_kolektor_luar_desa\": 5000\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "08. Setoran ke Kecamatan",
+            "item": [
+                {
+                    "name": "1. GET Summary KPI & Rekap Per Desa",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan/summary?tahun=2026&desa_id=all",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan",
+                                "summary"
+                            ],
+                            "query": [
+                                {
+                                    "key": "tahun",
+                                    "value": "2026"
+                                },
+                                {
+                                    "key": "desa_id",
+                                    "value": "all"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Summary & Rekap Setoran Kecamatan",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"total_disetorkan\": 5000000,\n        \"total_diterima\": 5000000,\n        \"total_pending\": 0,\n        \"total_ditolak\": 0,\n        \"total_realisasi_desa\": 56181000,\n        \"sisa_kas_desa\": 51181000,\n        \"counts\": {\n            \"total\": 1,\n            \"diterima\": 1,\n            \"pending\": 0,\n            \"ditolak\": 0\n        },\n        \"rekap_per_desa\": [\n            {\n                \"desa_id\": 1,\n                \"nama_desa\": \"Desa Barudua\",\n                \"kode_desa\": \"3205120004\",\n                \"target_pbb\": 93800000,\n                \"realisasi_pbb\": 56181000,\n                \"total_disetor_diterima\": 5000000,\n                \"total_disetor_pending\": 0,\n                \"sisa_kas_desa\": 51181000,\n                \"persentase_disetor\": 5.33,\n                \"tanggal_setor_terakhir\": \"2026-08-12\",\n                \"status_terakhir\": \"DITERIMA\"\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. GET List Setoran ke Kecamatan",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan?page=1&limit=15&status=ALL&desa_id=ALL",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "15"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ALL"
+                                },
+                                {
+                                    "key": "desa_id",
+                                    "value": "ALL"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Setoran",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"desa_id\": 1,\n            \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n            \"tanggal_setor\": \"2026-08-12\",\n            \"tahun\": 2026,\n            \"nominal\": 5000000,\n            \"metode_setoran\": \"TRANSFER\",\n            \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n            \"nomor_referensi\": \"REF88291029\",\n            \"penyetor_nama\": \"Asep Setiawan\",\n            \"penyetor_jabatan\": \"Bendahara Desa\",\n            \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n            \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n            \"catatan_kecamatan\": \"Setoran telah diverifikasi dan diterima di rekening kas kecamatan.\",\n            \"status\": \"DITERIMA\",\n            \"tanggal_diterima\": \"2026-08-12 14:00:00\",\n            \"desa\": {\n                \"id\": 1,\n                \"nama_desa\": \"Desa Barudua\",\n                \"kode_desa\": \"3205120004\",\n                \"nama_kecamatan\": \"Malangbong\"\n            }\n        }\n    ],\n    \"pagination\": {\n        \"current_page\": 1,\n        \"last_page\": 1,\n        \"per_page\": 15,\n        \"total\": 1\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. GET Detail Setoran ke Kecamatan",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Detail Setoran",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 5000000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291029\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n        \"catatan_kecamatan\": \"Setoran telah diverifikasi dan diterima di rekening kas kecamatan.\",\n        \"status\": \"DITERIMA\",\n        \"tanggal_diterima\": \"2026-08-12 14:00:00\",\n        \"desa\": {\n            \"id\": 1,\n            \"nama_desa\": \"Desa Barudua\",\n            \"kode_desa\": \"3205120004\",\n            \"nama_kecamatan\": \"Malangbong\"\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. POST Buat Setoran Baru (Desa)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"tanggal_setor\": \"2026-08-12\",\n    \"tahun\": 2026,\n    \"nominal\": 5000000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291029\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n    \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Setoran Baru Berhasil",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran ke Kecamatan berhasil disimpan.\",\n    \"data\": {\n        \"id\": 2,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/X7Y8\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 5000000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291029\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n        \"status\": \"PENDING\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. PUT Update Data Setoran (Desa)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"tanggal_setor\": \"2026-08-12\",\n    \"tahun\": 2026,\n    \"nominal\": 7500000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291030\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n    \"catatan_desa\": \"Pembaruan nominal setoran PBB-P2 Tahap I\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Update Setoran Berhasil",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran berhasil diperbarui.\",\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 7500000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291030\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Pembaruan nominal setoran PBB-P2 Tahap I\",\n        \"status\": \"PENDING\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. POST Verifikasi Setoran (Kecamatan)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"DITERIMA\",\n    \"catatan_kecamatan\": \"Setoran telah diverifikasi dan dana telah diterima di rekening kas kecamatan.\",\n    \"tanggal_diterima\": \"2026-08-12\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan/1/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan",
+                                "1",
+                                "verify"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Verifikasi Setoran Kecamatan",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Verifikasi status setoran berhasil diubah menjadi DITERIMA.\",\n    \"data\": {\n        \"id\": 1,\n        \"status\": \"DITERIMA\",\n        \"catatan_kecamatan\": \"Setoran telah diverifikasi dan dana telah diterima di rekening kas kecamatan.\",\n        \"tanggal_diterima\": \"2026-08-12 14:30:00\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "7. DELETE Hapus Data Setoran",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Hapus Setoran Berhasil",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran berhasil dihapus.\"\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 }

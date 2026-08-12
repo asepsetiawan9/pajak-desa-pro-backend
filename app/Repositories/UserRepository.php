@@ -6,9 +6,13 @@ use App\Models\User;
 
 class UserRepository
 {
-    public function getAllUsers(?string $role = null, ?bool $statusAktif = null, ?string $search = null)
+    public function getAllUsers(?string $role = null, ?bool $statusAktif = null, ?string $search = null, ?int $desaId = null)
     {
-        $query = User::query();
+        $query = User::query()->with('desa');
+
+        if ($desaId !== null) {
+            $query->where('desa_id', $desaId);
+        }
 
         if ($role && $role !== 'ALL') {
             $query->where('role', $role);
@@ -33,7 +37,7 @@ class UserRepository
 
     public function findById(int $id): ?User
     {
-        return User::find($id);
+        return User::with('desa')->find($id);
     }
 
     public function findByUsername(string $username): ?User
@@ -43,13 +47,14 @@ class UserRepository
 
     public function create(array $data): User
     {
-        return User::create($data);
+        $user = User::create($data);
+        return $user->load('desa');
     }
 
     public function update(User $user, array $data): User
     {
         $user->update($data);
-        return $user->fresh();
+        return $user->fresh(['desa']);
     }
 
     public function delete(User $user): bool

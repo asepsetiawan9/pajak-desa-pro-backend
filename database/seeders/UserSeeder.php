@@ -12,6 +12,18 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
+                'name' => 'Super Admin System',
+                'username' => 'superadmin',
+                'nip' => '00000000 000000 0 000',
+                'email' => 'superadmin@lentera.id',
+                'phone' => '080011223344',
+                'password' => Hash::make('superadmin123'),
+                'role' => 'SUPER_ADMIN_SYSTEM',
+                'dusun_akses' => 'ALL',
+                'status_aktif' => true,
+                'desa_id' => null,
+            ],
+            [
                 'name' => 'Asep Setiawan, S.Kom',
                 'username' => 'admin.desa',
                 'nip' => '19880512 201201 1 004',
@@ -21,17 +33,7 @@ class UserSeeder extends Seeder
                 'role' => 'SUPER_ADMIN',
                 'dusun_akses' => 'ALL',
                 'status_aktif' => true,
-            ],
-            [
-                'name' => 'Hj. Ratna Sari, S.E.',
-                'username' => 'bendahara.pbb',
-                'nip' => '19910320 201503 2 008',
-                'email' => 'bendahara@barudua.desa.id',
-                'phone' => '082198765432',
-                'password' => Hash::make('password123'),
-                'role' => 'BENDAHARA',
-                'dusun_akses' => 'ALL',
-                'status_aktif' => true,
+                'desa_id' => 1,
             ],
             [
                 'name' => 'Deden Sudrajat',
@@ -43,6 +45,7 @@ class UserSeeder extends Seeder
                 'role' => 'KOLEKTOR',
                 'dusun_akses' => 'BALOK, CIDERES',
                 'status_aktif' => true,
+                'desa_id' => 1,
             ],
             [
                 'name' => 'Maman Suherman',
@@ -54,6 +57,7 @@ class UserSeeder extends Seeder
                 'role' => 'KOLEKTOR',
                 'dusun_akses' => 'CIDERES',
                 'status_aktif' => true,
+                'desa_id' => 1,
             ],
             [
                 'name' => 'Aep Saepudin',
@@ -65,6 +69,7 @@ class UserSeeder extends Seeder
                 'role' => 'KOLEKTOR',
                 'dusun_akses' => 'PUNCAK SARI, CIPEDES',
                 'status_aktif' => true,
+                'desa_id' => 1,
             ],
             [
                 'name' => 'Endang Yana',
@@ -76,6 +81,7 @@ class UserSeeder extends Seeder
                 'role' => 'KEPALA_DESA',
                 'dusun_akses' => 'ALL',
                 'status_aktif' => true,
+                'desa_id' => 1,
             ],
         ];
 

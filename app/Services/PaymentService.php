@@ -78,7 +78,13 @@ class PaymentService
             'petugas' => $payload['petugas'] ?? null,
         ];
 
-        $feePerLuarDesa = (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000);
+        $enableFeeLuarDesa = filter_var(
+            $this->settingRepository->getByKey('enable_fee_kolektor_luar_desa', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $feePerLuarDesa = $enableFeeLuarDesa
+            ? (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000)
+            : 0;
 
         return DB::transaction(function () use ($nops, $dhkpIds, $tahun, $metode, $operatorId, $metadataKk, $feePerLuarDesa) {
             // Lock rows for update to prevent concurrent double-payments
@@ -166,9 +172,12 @@ class PaymentService
             }
 
             $totalBayar = $totalPokok + $totalDenda + $totalFee;
+            $firstRow = $rows->first();
+            $desaId = $firstRow ? $firstRow->desa_id : (auth()->check() ? auth()->user()->desa_id : null);
 
             // Buat transaksi
             $transaction = $this->transactionRepository->create([
+                'desa_id' => $desaId,
                 'nomor_stts' => $nomorStts,
                 'tanggal_transaksi' => now(),
                 'operator_id' => $operatorId,

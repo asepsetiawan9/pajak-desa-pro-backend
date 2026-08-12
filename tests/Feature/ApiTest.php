@@ -39,7 +39,25 @@ class ApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonStructure([
-                'data' => ['total_ketetapan', 'terbayar', 'sisa_piutang', 'persentase_realisasi']
+                'data' => ['total_ketetapan', 'terbayar', 'sisa_piutang', 'persentase_realisasi', 'by_desa']
+            ]);
+    }
+
+    public function test_super_admin_summary_returns_by_desa()
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+        $response = $this->actingAs($superAdmin)->getJson('/api/v1/dhkp/summary?tahun=2026');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_ketetapan',
+                    'terbayar',
+                    'by_desa' => [
+                        '*' => ['desa_id', 'nama_desa', 'target', 'realisasi', 'persentase']
+                    ]
+                ]
             ]);
     }
 
@@ -190,5 +208,53 @@ class ApiTest extends TestCase
             ->assertJsonPath('data.namaDesa', 'Desa Barudua Baru')
             ->assertJsonPath('data.kabupaten', 'Kabupaten Sukabumi')
             ->assertJsonPath('data.nama_instansi', 'Kabupaten Sukabumi');
+    }
+
+    public function test_setoran_kecamatan_crud_and_verification_flow()
+    {
+        $user = User::first();
+
+        // 1. Create Setoran Baru dari Desa
+        $storeResponse = $this->actingAs($user)->postJson('/api/v1/setoran-kecamatan', [
+            'tanggal_setor' => '2026-08-12',
+            'tahun' => 2026,
+            'nominal' => 5000000,
+            'metode_setoran' => 'TRANSFER',
+            'bank_tujuan' => 'Bank Jabar Banten (BJB)',
+            'nomor_referensi' => 'REF882910',
+            'penyetor_nama' => 'Asep Setiawan',
+            'penyetor_jabatan' => 'Bendahara Desa',
+            'penerima_kecamatan' => 'Kasi Goverment',
+            'catatan_desa' => 'Setoran PBB Tahap I',
+        ]);
+
+        $storeResponse->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.nominal', 5000000)
+            ->assertJsonPath('data.status', 'PENDING');
+
+        $setoranId = $storeResponse->json('data.id');
+
+        // 2. Summary Endpoint Check
+        $summaryResponse = $this->actingAs($user)->getJson('/api/v1/setoran-kecamatan/summary?tahun=2026');
+        $summaryResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.total_pending', 5000000);
+
+        // 3. Verify Status oleh Kecamatan
+        $verifyResponse = $this->actingAs($user)->postJson("/api/v1/setoran-kecamatan/{$setoranId}/verify", [
+            'status' => 'DITERIMA',
+            'catatan_kecamatan' => 'Diterima di kas kecamatan.',
+            'tanggal_diterima' => '2026-08-12',
+        ]);
+
+        $verifyResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'DITERIMA');
+
+        // 4. Verify Summary Diterima
+        $summaryResponse2 = $this->actingAs($user)->getJson('/api/v1/setoran-kecamatan/summary?tahun=2026');
+        $summaryResponse2->assertStatus(200)
+            ->assertJsonPath('data.total_diterima', 5000000);
     }
 }

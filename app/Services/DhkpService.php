@@ -23,9 +23,9 @@ class DhkpService
         return $dhkp;
     }
 
-    public function getKpiSummary(int $tahun = 2026, ?string $dusunFilter = null): array
+    public function getKpiSummary(int $tahun = 2026, ?string $dusunFilter = null, ?int $desaId = null): array
     {
-        return $this->dhkpRepository->getSummaryKPI($tahun, $dusunFilter);
+        return $this->dhkpRepository->getSummaryKPI($tahun, $dusunFilter, $desaId);
     }
 
     public function createSppt(array $data): DhkpRow

@@ -9,11 +9,26 @@ class TransactionRepository
 {
     public function getFilteredTransactions(array $filters, int $perPage = 25): LengthAwarePaginator
     {
-        $query = TransactionRecord::query()->with(['operator:id,name', 'dhkpRows']);
+        $user = auth()->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'SUPER_ADMIN' || is_null($user->desa_id));
+
+        $query = $isSuperAdmin
+            ? TransactionRecord::withoutGlobalScope(\App\Scopes\TenantScope::class)->with(['desa:id,nama_desa,kode_desa', 'operator:id,name', 'dhkpRows.desa:id,nama_desa,kode_desa'])
+            : TransactionRecord::query()->with(['desa:id,nama_desa,kode_desa', 'operator:id,name', 'dhkpRows.desa:id,nama_desa,kode_desa']);
 
         $effectivePerPage = !empty($filters['limit']) ? (int) $filters['limit'] : (!empty($filters['per_page']) ? (int) $filters['per_page'] : $perPage);
         if ($effectivePerPage <= 0) {
             $effectivePerPage = 10000;
+        }
+
+        if (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all') {
+            $desaIdFilter = $filters['desa_id'];
+            $query->where(function ($q) use ($desaIdFilter) {
+                $q->where('desa_id', $desaIdFilter)
+                  ->orWhereHas('dhkpRows', function ($dq) use ($desaIdFilter) {
+                      $dq->where('desa_id', $desaIdFilter);
+                  });
+            });
         }
 
         if (!empty($filters['status_void'])) {
@@ -54,12 +69,12 @@ class TransactionRepository
 
     public function findById(int $id): ?TransactionRecord
     {
-        return TransactionRecord::with(['operator', 'voidUser', 'dhkpRows'])->find($id);
+        return TransactionRecord::with(['desa:id,nama_desa,kode_desa', 'operator', 'voidUser', 'dhkpRows'])->find($id);
     }
 
     public function findBySttsNumber(string $sttsNumber): ?TransactionRecord
     {
-        return TransactionRecord::with(['operator', 'voidUser', 'dhkpRows'])
+        return TransactionRecord::with(['desa:id,nama_desa,kode_desa', 'operator', 'voidUser', 'dhkpRows'])
             ->where('nomor_stts', $sttsNumber)
             ->first();
     }
