@@ -20,7 +20,7 @@ class SetoranKecamatanController extends Controller
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', $request->input('limit', 15));
-        $filters = $request->only(['desa_id', 'status', 'tahun', 'search']);
+        $filters = $request->only(['desa_id', 'status', 'tahun', 'kategori', 'search']);
 
         $setoranList = $this->service->getFilteredSetoran($filters, $perPage);
 
@@ -86,6 +86,7 @@ class SetoranKecamatanController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'tanggal_setor' => 'required|date',
+            'kategori' => 'nullable|string|in:SETOR_KECAMATAN,KEGIATAN_DESA,OPERASIONAL_DESA,ADMINISTRASI,LAINNYA',
             'tahun' => 'nullable|integer',
             'nominal' => 'required|numeric|min:1',
             'metode_setoran' => 'required|string|max:30',
@@ -113,7 +114,7 @@ class SetoranKecamatanController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 'success',
-                'message' => 'Data setoran ke Kecamatan berhasil disimpan.',
+                'message' => 'Data pengeluaran / setoran kas berhasil disimpan.',
                 'data' => $setoran,
             ], 201);
         } catch (\Exception $e) {
@@ -132,6 +133,7 @@ class SetoranKecamatanController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'tanggal_setor' => 'sometimes|required|date',
+            'kategori' => 'nullable|string|in:SETOR_KECAMATAN,KEGIATAN_DESA,OPERASIONAL_DESA,ADMINISTRASI,LAINNYA',
             'tahun' => 'nullable|integer',
             'nominal' => 'sometimes|required|numeric|min:1',
             'metode_setoran' => 'sometimes|required|string|max:30',

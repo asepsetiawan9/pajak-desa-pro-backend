@@ -16,6 +16,8 @@ class SetoranKecamatan extends Model
     protected $fillable = [
         'desa_id',
         'nomor_bukti',
+        'kategori',
+        'perlu_verifikasi_kecamatan',
         'tanggal_setor',
         'tahun',
         'nominal',
@@ -39,6 +41,7 @@ class SetoranKecamatan extends Model
         'tanggal_diterima' => 'datetime',
         'tahun' => 'integer',
         'nominal' => 'float',
+        'perlu_verifikasi_kecamatan' => 'boolean',
         'desa_id' => 'integer',
         'penerima_user_id' => 'integer',
         'created_by' => 'integer',

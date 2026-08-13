@@ -55,7 +55,17 @@ class SetoranKecamatanService
             $data['desa_id'] = $desaId;
         }
 
-        $data['status'] = $data['status'] ?? 'PENDING';
+        $kategori = $data['kategori'] ?? 'SETOR_KECAMATAN';
+        $data['kategori'] = $kategori;
+
+        if ($kategori === 'SETOR_KECAMATAN') {
+            $data['perlu_verifikasi_kecamatan'] = true;
+            $data['status'] = $data['status'] ?? 'PENDING';
+        } else {
+            $data['perlu_verifikasi_kecamatan'] = false;
+            $data['status'] = 'DITERIMA';
+            $data['tanggal_diterima'] = now();
+        }
 
         $setoran = $this->repository->create($data);
 

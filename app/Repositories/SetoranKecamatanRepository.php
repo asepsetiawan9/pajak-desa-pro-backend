@@ -55,6 +55,15 @@ class SetoranKecamatanRepository
             $query->where('status', $filters['status']);
         }
 
+        // Filter kategori
+        if (!empty($filters['kategori']) && $filters['kategori'] !== 'ALL' && $filters['kategori'] !== 'all') {
+            if ($filters['kategori'] === 'INTERNAL') {
+                $query->where('kategori', '!=', 'SETOR_KECAMATAN');
+            } else {
+                $query->where('kategori', $filters['kategori']);
+            }
+        }
+
         // Filter tahun
         if (!empty($filters['tahun'])) {
             $query->where('tahun', $filters['tahun']);
@@ -100,7 +109,10 @@ class SetoranKecamatanRepository
         $allSetoran = $setoranQuery->get();
 
         $totalDisetorkan = (float) $allSetoran->sum('nominal');
-        $totalDiterima = (float) $allSetoran->where('status', 'DITERIMA')->sum('nominal');
+        $totalDiterima = (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
+        $totalPengeluaranInternal = (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal');
+        $totalPengeluaranDesa = $totalDiterima + $totalPengeluaranInternal;
+
         $totalPending = (float) $allSetoran->where('status', 'PENDING')->sum('nominal');
         $totalDitolak = (float) $allSetoran->where('status', 'DITOLAK')->sum('nominal');
 
@@ -119,7 +131,7 @@ class SetoranKecamatanRepository
         }
 
         $totalRealisasiDesa = (float) $dhkpQuery->sum('ketetapan_pbb');
-        $sisaKasDesa = max(0, $totalRealisasiDesa - $totalDiterima);
+        $sisaKasDesa = max(0, $totalRealisasiDesa - $totalPengeluaranDesa);
 
         // Rekapitulasi per Desa
         $rekapPerDesa = [];
@@ -154,10 +166,12 @@ class SetoranKecamatanRepository
                 ->where('tahun', $tahun)
                 ->get();
 
-            $disetorDiterima = (float) $desaSetoranAll->where('status', 'DITERIMA')->sum('nominal');
+            $disetorDiterima = (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
+            $pengeluaranInternalDesa = (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal');
+            $totalPengeluaranDesaLocal = $disetorDiterima + $pengeluaranInternalDesa;
             $disetorPending = (float) $desaSetoranAll->where('status', 'PENDING')->sum('nominal');
 
-            // Persentase Capaian = (Disetor ke Kecamatan / Target PBB) * 100
+            // Persentase Capaian Setoran Kecamatan = (Disetor ke Kecamatan Verified / Target PBB) * 100
             $persenDisetor = $targetPbb > 0 ? round(($disetorDiterima / $targetPbb) * 100, 2) : 0;
             $lastSetoran = $desaSetoranAll->sortByDesc('tanggal_setor')->first();
 
@@ -168,8 +182,10 @@ class SetoranKecamatanRepository
                 'target_pbb' => $targetPbb,
                 'realisasi_pbb' => $desaDhkpLunas,
                 'total_disetor_diterima' => $disetorDiterima,
+                'total_pengeluaran_internal' => $pengeluaranInternalDesa,
+                'total_pengeluaran_desa' => $totalPengeluaranDesaLocal,
                 'total_disetor_pending' => $disetorPending,
-                'sisa_kas_desa' => max(0, $desaDhkpLunas - $disetorDiterima),
+                'sisa_kas_desa' => max(0, $desaDhkpLunas - $totalPengeluaranDesaLocal),
                 'persentase_disetor' => $persenDisetor,
                 'tanggal_setor_terakhir' => $lastSetoran ? $lastSetoran->tanggal_setor->format('Y-m-d') : null,
                 'status_terakhir' => $lastSetoran ? $lastSetoran->status : null,
@@ -179,6 +195,8 @@ class SetoranKecamatanRepository
         return [
             'total_disetorkan' => $totalDisetorkan,
             'total_diterima' => $totalDiterima,
+            'total_pengeluaran_internal' => $totalPengeluaranInternal,
+            'total_pengeluaran_desa' => $totalPengeluaranDesa,
             'total_pending' => $totalPending,
             'total_ditolak' => $totalDitolak,
             'total_realisasi_desa' => $totalRealisasiDesa,
