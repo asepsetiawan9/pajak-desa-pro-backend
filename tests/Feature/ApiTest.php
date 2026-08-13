@@ -257,4 +257,26 @@ class ApiTest extends TestCase
         $summaryResponse2->assertStatus(200)
             ->assertJsonPath('data.total_diterima', 5000000);
     }
+
+    public function test_audit_logs_endpoint_returns_activity_history()
+    {
+        $user = User::first();
+
+        // Perform login to create audit log
+        $this->postJson('/api/v1/auth/login', [
+            'username' => 'kades.barudua',
+            'password' => 'password123',
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/v1/audit-logs');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => ['id', 'user_id', 'action', 'module', 'payload', 'created_at']
+                ],
+                'meta' => ['current_page', 'last_page', 'total']
+            ]);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\DhkpRow;
 use App\Repositories\DhkpRepository;
 
@@ -32,7 +33,23 @@ class DhkpService
     {
         // Hitung total bayar = ketetapan + denda + fee_kolektor
         $data['total_bayar'] = ($data['ketetapan_pbb'] ?? 0) + ($data['denda'] ?? 0) + ($data['fee_kolektor'] ?? 0);
-        return $this->dhkpRepository->create($data);
+        $dhkp = $this->dhkpRepository->create($data);
+
+        $user = auth()->user();
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'CREATE_DHKP',
+            'module' => 'DHKP',
+            'payload' => [
+                'dhkp_id' => $dhkp->id,
+                'nop' => $dhkp->nop,
+                'nama_wp' => $dhkp->nama_wp,
+                'desa_id' => $dhkp->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
+        return $dhkp;
     }
 
     public function updateSppt(int $id, array $data): DhkpRow
@@ -44,17 +61,62 @@ class DhkpService
             $fee = $data['fee_kolektor'] ?? $dhkp->fee_kolektor;
             $data['total_bayar'] = $ketetapan + $denda + $fee;
         }
-        return $this->dhkpRepository->update($dhkp, $data);
+        $updated = $this->dhkpRepository->update($dhkp, $data);
+
+        $user = auth()->user();
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'UPDATE_DHKP',
+            'module' => 'DHKP',
+            'payload' => [
+                'dhkp_id' => $updated->id,
+                'nop' => $updated->nop,
+                'status_bayar' => $updated->status_bayar,
+                'desa_id' => $updated->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
+        return $updated;
     }
 
     public function deleteSppt(int $id): bool
     {
         $dhkp = $this->getDetail($id);
+        $user = auth()->user();
+        
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'DELETE_DHKP',
+            'module' => 'DHKP',
+            'payload' => [
+                'dhkp_id' => $dhkp->id,
+                'nop' => $dhkp->nop,
+                'nama_wp' => $dhkp->nama_wp,
+                'desa_id' => $dhkp->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
         return $this->dhkpRepository->delete($dhkp);
     }
 
     public function importSppt(array $rows): array
     {
-        return $this->dhkpRepository->bulkUpsert($rows);
+        $result = $this->dhkpRepository->bulkUpsert($rows);
+
+        $user = auth()->user();
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'IMPORT_DHKP',
+            'module' => 'DHKP',
+            'payload' => [
+                'total_imported' => count($rows),
+                'desa_id' => $user?->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
+        return $result;
     }
 }

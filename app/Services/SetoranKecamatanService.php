@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\Desa;
 use App\Models\SetoranKecamatan;
 use App\Repositories\SetoranKecamatanRepository;
@@ -56,7 +57,22 @@ class SetoranKecamatanService
 
         $data['status'] = $data['status'] ?? 'PENDING';
 
-        return $this->repository->create($data);
+        $setoran = $this->repository->create($data);
+
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'CREATE_SETORAN',
+            'module' => 'SETORAN_KECAMATAN',
+            'payload' => [
+                'setoran_id' => $setoran->id,
+                'nomor_bukti' => $setoran->nomor_bukti,
+                'jumlah_setoran' => $setoran->jumlah_setoran,
+                'desa_id' => $setoran->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
+        return $setoran;
     }
 
     public function updateSetoran(int $id, array $data): SetoranKecamatan
@@ -89,7 +105,23 @@ class SetoranKecamatanService
             throw new \Exception("Status verifikasi tidak valid.");
         }
 
+        $user = auth()->user();
         $this->repository->verify($setoran, $status, $catatanKecamatan, $tanggalDiterima);
+
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'VERIFY_SETORAN',
+            'module' => 'SETORAN_KECAMATAN',
+            'payload' => [
+                'setoran_id' => $setoran->id,
+                'nomor_bukti' => $setoran->nomor_bukti,
+                'status' => $status,
+                'catatan' => $catatanKecamatan,
+                'desa_id' => $setoran->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
+
         return $setoran->fresh(['desa', 'penerimaUser', 'creator']);
     }
 
@@ -106,6 +138,19 @@ class SetoranKecamatanService
         if ($setoran->status !== 'PENDING' && !$isSuperAdmin) {
             throw new \Exception("Setoran yang sudah disetujui/ditolak tidak dapat dihapus.");
         }
+
+        AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => 'DELETE_SETORAN',
+            'module' => 'SETORAN_KECAMATAN',
+            'payload' => [
+                'setoran_id' => $setoran->id,
+                'nomor_bukti' => $setoran->nomor_bukti,
+                'jumlah_setoran' => $setoran->jumlah_setoran,
+                'desa_id' => $setoran->desa_id,
+            ],
+            'ip_address' => request()->ip(),
+        ]);
 
         return $this->repository->delete($setoran);
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,30 +18,80 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        $clientPlatform = strtolower($request->header('X-Client-Platform', $request->input('client_platform', 'web')));
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            AuditLog::create([
+                'user_id' => $user?->id,
+                'action' => 'LOGIN_FAILED',
+                'module' => 'AUTH',
+                'payload' => [
+                    'username' => $request->username,
+                    'platform' => $clientPlatform,
+                    'reason' => 'Kredensial tidak valid',
+                ],
+                'ip_address' => $request->ip(),
+            ]);
+
             throw ValidationException::withMessages([
                 'username' => ['Username atau password yang Anda masukkan salah.'],
             ]);
         }
 
         if (!$user->status_aktif) {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'LOGIN_FAILED',
+                'module' => 'AUTH',
+                'payload' => [
+                    'username' => $request->username,
+                    'platform' => $clientPlatform,
+                    'reason' => 'Akun non-aktif',
+                ],
+                'ip_address' => $request->ip(),
+            ]);
+
             throw ValidationException::withMessages([
                 'username' => ['Akun Anda dalam status Non-Aktif. Silakan hubungi Administrator.'],
             ]);
         }
 
-        $clientPlatform = strtolower($request->header('X-Client-Platform', $request->input('client_platform', 'web')));
         $normalizedRole = strtolower(str_replace('_', '', $user->role));
-        if ($clientPlatform === 'mobile' && !in_array($normalizedRole, ['kolektor', 'kepaladesa'])) {
+        if ($clientPlatform === 'mobile' && !in_array($normalizedRole, ['kolektor', 'kepaladesa', 'superadminsystem'])) {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'LOGIN_DENIED',
+                'module' => 'AUTH',
+                'payload' => [
+                    'username' => $request->username,
+                    'platform' => $clientPlatform,
+                    'role' => $user->role,
+                    'reason' => 'Akses mobile tidak diizinkan untuk role ini',
+                ],
+                'ip_address' => $request->ip(),
+            ]);
+
             throw ValidationException::withMessages([
-                'username' => ['Akses aplikasi mobile hanya diizinkan untuk Kolektor dan Kepala Desa.'],
+                'username' => ['Akses aplikasi mobile hanya diizinkan untuk Admin Kecamatan, Kolektor, dan Kepala Desa.'],
             ]);
         }
 
         $user->load('desa');
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'LOGIN',
+            'module' => 'AUTH',
+            'payload' => [
+                'username' => $user->username,
+                'role' => $user->role,
+                'platform' => $clientPlatform,
+                'desa_id' => $user->desa_id,
+            ],
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'success' => true,
@@ -87,7 +138,22 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        if ($user) {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'LOGOUT',
+                'module' => 'AUTH',
+                'payload' => [
+                    'username' => $user->username,
+                    'desa_id' => $user->desa_id,
+                ],
+                'ip_address' => $request->ip(),
+            ]);
+
+            $user->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'success' => true,

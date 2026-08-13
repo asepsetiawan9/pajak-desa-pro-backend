@@ -62,8 +62,16 @@ class TransactionController extends Controller
 
     public function pay(Request $request)
     {
+        $user = $request->user();
+        if ($user && $user->role === 'KEPALA_DESA') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kepala Desa hanya memiliki akses melihat data dan tidak dapat melakukan transaksi pembayaran.',
+            ], 403);
+        }
+
         $payload = $request->all();
-        $operatorId = $request->user() ? $request->user()->id : 1;
+        $operatorId = $user ? $user->id : 1;
 
         $transaction = $this->paymentService->processPayment($payload, $operatorId);
 
@@ -76,8 +84,16 @@ class TransactionController extends Controller
 
     public function void(Request $request, int $id)
     {
+        $user = $request->user();
+        if ($user && $user->role === 'KEPALA_DESA') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kepala Desa hanya memiliki akses melihat data dan tidak dapat melakukan pembatalan transaksi.',
+            ], 403);
+        }
+
         $reason = $request->input('reason', 'Pembatalan transaksi oleh operator');
-        $userId = $request->user() ? $request->user()->id : 1;
+        $userId = $user ? $user->id : 1;
 
         $transaction = $this->paymentService->voidTransaction($id, $reason, $userId);
 

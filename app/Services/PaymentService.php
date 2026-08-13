@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\DhkpRow;
 use App\Models\TransactionRecord;
 use App\Repositories\DhkpRepository;
@@ -203,6 +204,21 @@ class PaymentService
                 ]);
             }
 
+            AuditLog::create([
+                'desa_id' => $desaId,
+                'user_id' => $operatorId,
+                'action' => 'PAYMENT_CREATED',
+                'module' => 'TRANSACTION',
+                'payload' => [
+                    'nomor_stts' => $nomorStts,
+                    'total_bayar' => $totalBayar,
+                    'metode' => $metode,
+                    'jumlah_nop' => $rows->count(),
+                    'nops' => $rows->pluck('nop')->toArray(),
+                ],
+                'ip_address' => request()->ip(),
+            ]);
+
             return $transaction->fresh(['operator', 'dhkpRows']);
         });
     }
@@ -239,6 +255,19 @@ class PaymentService
                 'void_reason' => $reason,
                 'void_at' => now(),
                 'void_by' => $userId,
+            ]);
+
+            AuditLog::create([
+                'desa_id' => $transaction->desa_id,
+                'user_id' => $userId,
+                'action' => 'TRANSACTION_VOIDED',
+                'module' => 'TRANSACTION',
+                'payload' => [
+                    'nomor_stts' => $transaction->nomor_stts,
+                    'reason' => $reason,
+                    'total_bayar' => $transaction->total_bayar,
+                ],
+                'ip_address' => request()->ip(),
             ]);
 
             return $transaction->fresh(['operator', 'voidUser', 'dhkpRows']);

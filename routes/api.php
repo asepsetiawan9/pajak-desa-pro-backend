@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DesaController;
 use App\Http\Controllers\Api\DhkpController;
@@ -34,6 +35,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        // Audit Logs & Activity Trail Route
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
         // Users Management Routes (RBAC)
         Route::get('/users', [UserController::class, 'index']);
