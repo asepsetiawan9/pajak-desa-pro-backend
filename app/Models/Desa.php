@@ -50,4 +50,10 @@ class Desa extends Model
     {
         return $this->hasMany(Setting::class, 'desa_id');
     }
+
+    public function dusuns()
+    {
+        return $this->hasMany(Dusun::class, 'desa_id');
+    }
 }
+

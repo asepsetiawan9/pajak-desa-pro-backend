@@ -11,18 +11,18 @@ class SettingService
      */
     public const DEFAULT_SETTINGS = [
         // Identitas Instansi & Pejabat
-        'namaDesa' => 'Desa Barudua',
+        'namaDesa' => 'Desa',
         'kecamatan' => 'Malangbong',
         'kabupaten' => 'Kabupaten Garut',
         'kodeDesa' => '32.05.080.001',
         'jabatanKades' => 'Kepala Desa',
-        'namaKades' => 'Endang Yana',
-        'nipKades' => '19780512 200501 1 004',
+        'namaKades' => 'Kepala Desa',
+        'nipKades' => '-',
         'jabatanPetugas' => 'Bendahara / Kolektor Utama PBB',
         'namaPetugas' => 'Kolektor PBB Desa',
-        'nipPetugas' => '19850315 201002 1 002',
+        'nipPetugas' => '-',
         'teleponDesa' => '(0262) 421001',
-        'alamatDesa' => 'Jl. Raya Barudua No. 12, Kec. Malangbong, Garut',
+        'alamatDesa' => 'Kantor Kepala Desa',
 
         // Keuangan & Parameter Fee Kolektor PBB-P2
         'tahunAktif' => 2026,
@@ -35,8 +35,8 @@ class SettingService
         // Cetak STTS & Resi
         'printerFormat' => 'thermal58',
         'tampilkanLogoKop' => true,
-        'headerStruk' => "PEMERINTAH KABUPATEN GARUT\nKECAMATAN MALANGBONG - DESA BARUDUA",
-        'footerStruk' => "Terima kasih atas partisipasi Anda dalam pembayaran PBB-P2 untuk pembangunan Desa Barudua.",
+        'headerStruk' => "PEMERINTAH KABUPATEN GARUT\nKECAMATAN MALANGBONG - DESA",
+        'footerStruk' => "Terima kasih atas partisipasi Anda dalam pembayaran PBB-P2 untuk pembangunan desa.",
         'cetakOtomatis' => true,
         'jumlahSalinan' => 1,
     ];
@@ -49,7 +49,31 @@ class SettingService
     public function getAllSettings(?int $desaId = null): array
     {
         $rawSettings = $this->settingRepository->getAll($desaId);
-        $merged = array_merge(self::DEFAULT_SETTINGS, $rawSettings);
+
+        // Cari data desa jika spesifik desa diminta atau user terkait desa
+        $targetDesaId = $desaId ?? (auth()->check() ? auth()->user()->desa_id : null);
+        $desaDefaults = [];
+        if ($targetDesaId) {
+            $desa = \App\Models\Desa::find($targetDesaId);
+            if ($desa) {
+                $desaDefaults = [
+                    'namaDesa' => $desa->nama_desa,
+                    'nama_desa' => $desa->nama_desa,
+                    'kodeDesa' => $desa->kode_desa,
+                    'kode_desa' => $desa->kode_desa,
+                    'kecamatan' => $desa->nama_kecamatan,
+                    'nama_kecamatan' => $desa->nama_kecamatan,
+                    'kabupaten' => 'Pemerintah Kabupaten ' . $desa->nama_kabupaten,
+                    'nama_instansi' => 'Pemerintah Kabupaten ' . $desa->nama_kabupaten,
+                    'namaKades' => $desa->nama_kades ?: 'Kepala Desa',
+                    'nama_kades' => $desa->nama_kades ?: 'Kepala Desa',
+                    'nipKades' => $desa->nip_kades ?: '-',
+                    'nip_kades' => $desa->nip_kades ?: '-',
+                ];
+            }
+        }
+
+        $merged = array_merge(self::DEFAULT_SETTINGS, $desaDefaults, $rawSettings);
 
         return $this->castSettings($merged);
     }

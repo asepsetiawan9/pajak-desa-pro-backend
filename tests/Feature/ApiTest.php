@@ -279,4 +279,71 @@ class ApiTest extends TestCase
                 'meta' => ['current_page', 'last_page', 'total']
             ]);
     }
+
+    public function test_dusun_endpoint_returns_scoped_list_per_desa()
+    {
+        $adminDesa = User::where('username', 'admin.desa')->first();
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+
+        // 1. Admin Desa request dusuns for their own desa
+        $resDesa = $this->actingAs($adminDesa)->getJson('/api/v1/dusun');
+        $resDesa->assertStatus(200)
+            ->assertJsonPath('success', true);
+        $this->assertIsArray($resDesa->json('data'));
+
+        // 2. Super Admin request dusuns with desa_id filter
+        $resSuper = $this->actingAs($superAdmin)->getJson("/api/v1/dusun?desa_id={$adminDesa->desa_id}");
+        $resSuper->assertStatus(200)
+            ->assertJsonPath('success', true);
+        $this->assertIsArray($resSuper->json('data'));
+    }
+
+    public function test_master_dusun_crud_and_isolation()
+    {
+        $adminDesa = User::where('username', 'admin.desa')->first();
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+
+        // 1. Admin Desa creates new dusun
+        $createRes = $this->actingAs($adminDesa)->postJson('/api/v1/dusuns', [
+            'nama_dusun' => 'DUSUN MAWAR INDAH',
+            'kode_dusun' => 'DSN-01',
+            'rt_rw' => '001/002',
+            'status_aktif' => true,
+        ]);
+
+        $createRes->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.nama_dusun', 'DUSUN MAWAR INDAH')
+            ->assertJsonPath('data.desa_id', $adminDesa->desa_id);
+
+        $dusunId = $createRes->json('data.id');
+
+        // 2. List master dusun contains the new dusun
+        $listRes = $this->actingAs($adminDesa)->getJson('/api/v1/dusuns');
+        $listRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 3. Dropdown format=names contains DUSUN MAWAR INDAH
+        $namesRes = $this->actingAs($adminDesa)->getJson('/api/v1/dusuns?format=names');
+        $namesRes->assertStatus(200);
+        $this->assertContains('DUSUN MAWAR INDAH', $namesRes->json('data'));
+
+        // 4. Update dusun
+        $updateRes = $this->actingAs($adminDesa)->putJson("/api/v1/dusuns/{$dusunId}", [
+            'nama_dusun' => 'DUSUN MAWAR RAYA',
+            'rt_rw' => '001/003',
+        ]);
+        $updateRes->assertStatus(200)
+            ->assertJsonPath('data.nama_dusun', 'DUSUN MAWAR RAYA');
+
+        // 5. Toggle Status
+        $toggleRes = $this->actingAs($adminDesa)->patchJson("/api/v1/dusuns/{$dusunId}/toggle-status");
+        $toggleRes->assertStatus(200)
+            ->assertJsonPath('data.status_aktif', false);
+
+        // 6. Delete Dusun
+        $delRes = $this->actingAs($adminDesa)->deleteJson("/api/v1/dusuns/{$dusunId}");
+        $delRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+    }
 }

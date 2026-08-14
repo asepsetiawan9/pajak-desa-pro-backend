@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DesaController;
 use App\Http\Controllers\Api\DhkpController;
+use App\Http\Controllers\Api\DusunController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SetoranKecamatanController;
 use App\Http\Controllers\Api\SettingController;
@@ -55,6 +56,15 @@ Route::prefix('v1')->group(function () {
         Route::put('/dhkp/{id}', [DhkpController::class, 'update']);
         Route::post('/dhkp/import', [DhkpController::class, 'import']);
         Route::delete('/dhkp/{id}', [DhkpController::class, 'destroy']);
+
+        // Dusun Routes (Master Dusun & Per-Desa Scope)
+        Route::get('/dusun', [DusunController::class, 'index']);
+        Route::get('/dusuns', [DusunController::class, 'index']);
+        Route::post('/dusuns', [DusunController::class, 'store']);
+        Route::get('/dusuns/{id}', [DusunController::class, 'show']);
+        Route::put('/dusuns/{id}', [DusunController::class, 'update']);
+        Route::patch('/dusuns/{id}/toggle-status', [DusunController::class, 'toggleStatus']);
+        Route::delete('/dusuns/{id}', [DusunController::class, 'destroy']);
 
         // Transactions & Kasir STTS Routes
         Route::get('/transactions', [TransactionController::class, 'index']);

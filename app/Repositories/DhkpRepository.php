@@ -309,7 +309,7 @@ class DhkpRepository
             }
             $byDesa[] = [
                 'desa_id' => $userDesaObj->id ?? $effectiveDesaId,
-                'nama_desa' => $userDesaObj->nama_desa ?? 'Desa Barudua',
+                'nama_desa' => $userDesaObj->nama_desa ?? 'Desa',
                 'kode_desa' => $userDesaObj->kode_desa ?? '3205120004',
                 'target' => $totalKetetapan,
                 'realisasi' => $terbayar,
@@ -341,7 +341,7 @@ class DhkpRepository
                     'nama_wp' => $row->nama_wp,
                     'dusun' => $row->dusun,
                     'blok' => $row->blok,
-                    'nama_desa' => $row->desa->nama_desa ?? ($row->desa_id ? "Desa #{$row->desa_id}" : "Desa Barudua"),
+                    'nama_desa' => $row->desa->nama_desa ?? ($row->desa_id ? "Desa #{$row->desa_id}" : "Desa"),
                     'ketetapan_pbb' => $row->ketetapan_pbb,
                     'domisili' => $row->domisili,
                     'status_bayar' => $row->status_bayar,

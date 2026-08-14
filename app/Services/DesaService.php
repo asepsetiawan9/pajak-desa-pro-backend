@@ -13,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class DesaService
 {
-    public function __construct(protected DesaRepository $desaRepository) {}
+    public function __construct(
+        protected DesaRepository $desaRepository,
+        protected DusunService $dusunService
+    ) {}
 
     public function getAll(array $filters)
     {
@@ -159,8 +162,14 @@ class DesaService
                 ]);
             }
 
+            // 4. Seed Initial Dusun Master Records (jika diinputkan)
+            $rawDusuns = $data['dusuns'] ?? $data['initial_dusuns'] ?? null;
+            if (!empty($rawDusuns)) {
+                $this->dusunService->bulkCreate($desa->id, $rawDusuns);
+            }
+
             return [
-                'desa' => $desa->load('users'),
+                'desa' => $desa->load(['users', 'dusuns']),
                 'created_users' => $createdUsers,
             ];
         });

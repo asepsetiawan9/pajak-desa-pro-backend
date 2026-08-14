@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
         "name": "LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API v1",
-        "description": "Koleksi resmi REST API LENTERA (Layanan Elektronik Terpadu Pajak Daerah) v1 untuk Laravel 12 Backend, React Web App, dan Flutter Mobile App. Dilengkapi otorisasi Bearer Token Sanctum, penyaringan Multi-Desa (Multi-Tenant), Kasir STTS Single & Multi-NOP, Void Transaction, Rekapitulasi 21-Kolom, Modul Setoran PBB-P2 ke Kecamatan, serta Pengaturan Pejabat Penandatangan Dinamis.",
+        "description": "Koleksi resmi REST API LENTERA (Layanan Elektronik Terpadu Pajak Daerah) v2.3.0 untuk Laravel 12 Backend, React Web App, dan Flutter Mobile App. Dilengkapi otorisasi Bearer Token Sanctum, penyaringan Multi-Desa (Multi-Tenant), Kasir STTS Single & Multi-NOP, Void Transaction, Rekapitulasi 21-Kolom, Modul Pengeluaran Kas & Setoran PBB-P2 ke Kas Kecamatan, Master Dusun Management, serta Audit Log Activity Trail.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -1905,10 +1905,10 @@
             ]
         },
         {
-            "name": "08. Setoran ke Kecamatan",
+            "name": "08. Pengeluaran Kas & Setoran ke Kecamatan",
             "item": [
                 {
-                    "name": "1. GET Summary KPI & Rekap Per Desa",
+                    "name": "1. GET Summary KPI & Rekap Pengeluaran Kas",
                     "request": {
                         "method": "GET",
                         "header": [
@@ -1919,6 +1919,11 @@
                             },
                             {
                                 "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
                                 "value": "application/json",
                                 "type": "text"
                             }
@@ -1946,7 +1951,7 @@
                     },
                     "response": [
                         {
-                            "name": "200 OK - Summary & Rekap Setoran Kecamatan",
+                            "name": "200 OK - Summary Realisasi Kas & Setoran",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -1956,12 +1961,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"total_disetorkan\": 5000000,\n        \"total_diterima\": 5000000,\n        \"total_pending\": 0,\n        \"total_ditolak\": 0,\n        \"total_realisasi_desa\": 56181000,\n        \"sisa_kas_desa\": 51181000,\n        \"counts\": {\n            \"total\": 1,\n            \"diterima\": 1,\n            \"pending\": 0,\n            \"ditolak\": 0\n        },\n        \"rekap_per_desa\": [\n            {\n                \"desa_id\": 1,\n                \"nama_desa\": \"Desa Barudua\",\n                \"kode_desa\": \"3205120004\",\n                \"target_pbb\": 93800000,\n                \"realisasi_pbb\": 56181000,\n                \"total_disetor_diterima\": 5000000,\n                \"total_disetor_pending\": 0,\n                \"sisa_kas_desa\": 51181000,\n                \"persentase_disetor\": 5.33,\n                \"tanggal_setor_terakhir\": \"2026-08-12\",\n                \"status_terakhir\": \"DITERIMA\"\n            }\n        ]\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"total_realisasi_dhkp\": 85450000,\n        \"total_disetor_diterima\": 50000000,\n        \"total_pending_verifikasi\": 15000000,\n        \"total_pengeluaran_internal\": 10000000,\n        \"sisa_kas_desa\": 10450000,\n        \"persentase_disetor\": 58.51,\n        \"rekap_per_desa\": [\n            {\n                \"desa_id\": 1,\n                \"nama_desa\": \"Desa Barudua\",\n                \"target_pbb\": 120000000,\n                \"realisasi_dhkp\": 85450000,\n                \"total_disetor\": 50000000,\n                \"pengeluaran_internal\": 10000000,\n                \"sisa_kas_desa\": 10450000,\n                \"persentase_disetor\": 58.51\n            }\n        ]\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "2. GET List Setoran ke Kecamatan",
+                    "name": "2. GET List Pengeluaran Kas & Setoran (Paginated)",
                     "request": {
                         "method": "GET",
                         "header": [
@@ -1974,10 +1979,15 @@
                                 "key": "Accept",
                                 "value": "application/json",
                                 "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/setoran-kecamatan?page=1&limit=15&status=ALL&desa_id=ALL",
+                            "raw": "{{baseUrl}}/setoran-kecamatan?page=1&limit=15&status=ALL&desa_id=ALL&kategori=ALL",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -2000,13 +2010,17 @@
                                 {
                                     "key": "desa_id",
                                     "value": "ALL"
+                                },
+                                {
+                                    "key": "kategori",
+                                    "value": "ALL"
                                 }
                             ]
                         }
                     },
                     "response": [
                         {
-                            "name": "200 OK - List Setoran",
+                            "name": "200 OK - List Pengeluaran Kas & Setoran",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -2016,12 +2030,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"desa_id\": 1,\n            \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n            \"tanggal_setor\": \"2026-08-12\",\n            \"tahun\": 2026,\n            \"nominal\": 5000000,\n            \"metode_setoran\": \"TRANSFER\",\n            \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n            \"nomor_referensi\": \"REF88291029\",\n            \"penyetor_nama\": \"Asep Setiawan\",\n            \"penyetor_jabatan\": \"Bendahara Desa\",\n            \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n            \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n            \"catatan_kecamatan\": \"Setoran telah diverifikasi dan diterima di rekening kas kecamatan.\",\n            \"status\": \"DITERIMA\",\n            \"tanggal_diterima\": \"2026-08-12 14:00:00\",\n            \"desa\": {\n                \"id\": 1,\n                \"nama_desa\": \"Desa Barudua\",\n                \"kode_desa\": \"3205120004\",\n                \"nama_kecamatan\": \"Malangbong\"\n            }\n        }\n    ],\n    \"pagination\": {\n        \"current_page\": 1,\n        \"last_page\": 1,\n        \"per_page\": 15,\n        \"total\": 1\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"desa_id\": 1,\n            \"kategori\": \"SETOR_KECAMATAN\",\n            \"nomor_bukti\": \"STR/3205120004/20260810/A1B2\",\n            \"tanggal_setor\": \"2026-08-10\",\n            \"tahun\": 2026,\n            \"nominal\": 10000000,\n            \"metode_setoran\": \"TUNAI\",\n            \"bank_tujuan\": null,\n            \"nomor_referensi\": null,\n            \"penyetor_nama\": \"Asep Setiawan\",\n            \"penyetor_jabatan\": \"Bendahara Desa\",\n            \"penerima_kecamatan\": \"Kasi Tata Pemerintahan\",\n            \"catatan_desa\": \"Setoran PBB-P2 Tahap I\",\n            \"status\": \"DITERIMA\",\n            \"perlu_verifikasi_kecamatan\": true,\n            \"tanggal_diterima\": \"2026-08-10 14:30:00\",\n            \"penerima_nama\": \"Drs. H. Mulyadi (Kasi Pemerintahan)\",\n            \"desa\": {\n                \"id\": 1,\n                \"kode_desa\": \"32.05.04.2002\",\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        },\n        {\n            \"id\": 2,\n            \"desa_id\": 1,\n            \"kategori\": \"OPERASIONAL_DESA\",\n            \"nomor_bukti\": \"STR/3205120004/20260811/OP01\",\n            \"tanggal_setor\": \"2026-08-11\",\n            \"tahun\": 2026,\n            \"nominal\": 2500000,\n            \"metode_setoran\": \"TUNAI\",\n            \"bank_tujuan\": null,\n            \"nomor_referensi\": null,\n            \"penyetor_nama\": \"Asep Setiawan\",\n            \"penyetor_jabatan\": \"Bendahara Desa\",\n            \"penerima_kecamatan\": null,\n            \"catatan_desa\": \"Operasional ATK & Konsumsi Penagihan Dusun Balok\",\n            \"status\": \"DITERIMA\",\n            \"perlu_verifikasi_kecamatan\": false,\n            \"tanggal_diterima\": \"2026-08-11 10:00:00\",\n            \"penerima_nama\": \"Internal Desa\",\n            \"desa\": {\n                \"id\": 1,\n                \"kode_desa\": \"32.05.04.2002\",\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        }\n    ],\n    \"pagination\": {\n        \"current_page\": 1,\n        \"last_page\": 1,\n        \"per_page\": 15,\n        \"total\": 2\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "3. GET Detail Setoran ke Kecamatan",
+                    "name": "3. GET Detail Setoran / Pengeluaran Kas",
                     "request": {
                         "method": "GET",
                         "header": [
@@ -2032,6 +2046,11 @@
                             },
                             {
                                 "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
                                 "value": "application/json",
                                 "type": "text"
                             }
@@ -2049,7 +2068,7 @@
                     },
                     "response": [
                         {
-                            "name": "200 OK - Detail Setoran",
+                            "name": "200 OK - Detail Data Setoran",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -2059,12 +2078,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 5000000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291029\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n        \"catatan_kecamatan\": \"Setoran telah diverifikasi dan diterima di rekening kas kecamatan.\",\n        \"status\": \"DITERIMA\",\n        \"tanggal_diterima\": \"2026-08-12 14:00:00\",\n        \"desa\": {\n            \"id\": 1,\n            \"nama_desa\": \"Desa Barudua\",\n            \"kode_desa\": \"3205120004\",\n            \"nama_kecamatan\": \"Malangbong\"\n        }\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"kategori\": \"SETOR_KECAMATAN\",\n        \"nomor_bukti\": \"STR/3205120004/20260810/A1B2\",\n        \"tanggal_setor\": \"2026-08-10\",\n        \"tahun\": 2026,\n        \"nominal\": 10000000,\n        \"metode_setoran\": \"TUNAI\",\n        \"bank_tujuan\": null,\n        \"nomor_referensi\": null,\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n        \"status\": \"DITERIMA\",\n        \"perlu_verifikasi_kecamatan\": true,\n        \"desa\": {\n            \"id\": 1,\n            \"nama_desa\": \"Desa Barudua\",\n            \"kode_desa\": \"32.05.04.2002\"\n        }\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "4. POST Buat Setoran Baru (Desa)",
+                    "name": "4. POST Buat Setoran ke Kas Kecamatan (Desa)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -2086,7 +2105,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"tanggal_setor\": \"2026-08-12\",\n    \"tahun\": 2026,\n    \"nominal\": 5000000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291029\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n    \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\"\n}"
+                            "raw": "{\n    \"kategori\": \"SETOR_KECAMATAN\",\n    \"tanggal_setor\": \"2026-08-14\",\n    \"tahun\": 2026,\n    \"nominal\": 5000000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291029\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n    \"catatan_desa\": \"Setoran PBB-P2 Tahap II Dusun Balok & Cideres\"\n}"
                         },
                         "url": {
                             "raw": "{{baseUrl}}/setoran-kecamatan",
@@ -2100,7 +2119,7 @@
                     },
                     "response": [
                         {
-                            "name": "201 Created - Setoran Baru Berhasil",
+                            "name": "201 Created - Setoran Kecamatan Berhasil Disimpan (Status PENDING)",
                             "status": "Created",
                             "code": 201,
                             "_postman_previewlanguage": "json",
@@ -2110,12 +2129,63 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran ke Kecamatan berhasil disimpan.\",\n    \"data\": {\n        \"id\": 2,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/X7Y8\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 5000000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291029\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap I Dusun Balok & Cideres\",\n        \"status\": \"PENDING\"\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data pengeluaran / setoran kas berhasil disimpan.\",\n    \"data\": {\n        \"id\": 3,\n        \"desa_id\": 1,\n        \"kategori\": \"SETOR_KECAMATAN\",\n        \"nomor_bukti\": \"STR/3205042002/20260814/K9L1\",\n        \"tanggal_setor\": \"2026-08-14\",\n        \"tahun\": 2026,\n        \"nominal\": 5000000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291029\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Setoran PBB-P2 Tahap II Dusun Balok & Cideres\",\n        \"perlu_verifikasi_kecamatan\": true,\n        \"status\": \"PENDING\"\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "5. PUT Update Data Setoran (Desa)",
+                    "name": "5. POST Catat Pengeluaran Kas Internal Desa (Auto Diterima)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"kategori\": \"OPERASIONAL_DESA\",\n    \"tanggal_setor\": \"2026-08-14\",\n    \"tahun\": 2026,\n    \"nominal\": 1500000,\n    \"metode_setoran\": \"TUNAI\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"catatan_desa\": \"Biaya transport kolektor dan pengadaan form cetak STTS\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/setoran-kecamatan",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "setoran-kecamatan"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Pengeluaran Internal Berhasil (Auto DITERIMA)",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data pengeluaran / setoran kas berhasil disimpan.\",\n    \"data\": {\n        \"id\": 4,\n        \"desa_id\": 1,\n        \"kategori\": \"OPERASIONAL_DESA\",\n        \"nomor_bukti\": \"STR/3205042002/20260814/OP99\",\n        \"tanggal_setor\": \"2026-08-14\",\n        \"tahun\": 2026,\n        \"nominal\": 1500000,\n        \"metode_setoran\": \"TUNAI\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"catatan_desa\": \"Biaya transport kolektor dan pengadaan form cetak STTS\",\n        \"perlu_verifikasi_kecamatan\": false,\n        \"status\": \"DITERIMA\",\n        \"tanggal_diterima\": \"2026-08-14 19:00:00\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. PUT Update Data Pengeluaran / Setoran (Desa)",
                     "request": {
                         "method": "PUT",
                         "header": [
@@ -2137,22 +2207,22 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"tanggal_setor\": \"2026-08-12\",\n    \"tahun\": 2026,\n    \"nominal\": 7500000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291030\",\n    \"penyetor_nama\": \"Asep Setiawan\",\n    \"penyetor_jabatan\": \"Bendahara Desa\",\n    \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n    \"catatan_desa\": \"Pembaruan nominal setoran PBB-P2 Tahap I\"\n}"
+                            "raw": "{\n    \"tanggal_setor\": \"2026-08-14\",\n    \"nominal\": 5500000,\n    \"metode_setoran\": \"TRANSFER\",\n    \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n    \"nomor_referensi\": \"REF88291029-REV1\",\n    \"catatan_desa\": \"Koreksi penambahan nominal setoran\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/setoran-kecamatan/1",
+                            "raw": "{{baseUrl}}/setoran-kecamatan/3",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "setoran-kecamatan",
-                                "1"
+                                "3"
                             ]
                         }
                     },
                     "response": [
                         {
-                            "name": "200 OK - Update Setoran Berhasil",
+                            "name": "200 OK - Data Setoran Diperbarui",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -2162,12 +2232,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran berhasil diperbarui.\",\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nomor_bukti\": \"STR/3205120004/20260812/A9B1\",\n        \"tanggal_setor\": \"2026-08-12\",\n        \"tahun\": 2026,\n        \"nominal\": 7500000,\n        \"metode_setoran\": \"TRANSFER\",\n        \"bank_tujuan\": \"Bank Jabar Banten (BJB)\",\n        \"nomor_referensi\": \"REF88291030\",\n        \"penyetor_nama\": \"Asep Setiawan\",\n        \"penyetor_jabatan\": \"Bendahara Desa\",\n        \"penerima_kecamatan\": \"Kasi Pemerintahan Kecamatan\",\n        \"catatan_desa\": \"Pembaruan nominal setoran PBB-P2 Tahap I\",\n        \"status\": \"PENDING\"\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data pengeluaran / setoran kas berhasil diperbarui.\",\n    \"data\": {\n        \"id\": 3,\n        \"nominal\": 5500000,\n        \"nomor_referensi\": \"REF88291029-REV1\"\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "6. POST Verifikasi Setoran (Kecamatan)",
+                    "name": "7. POST Verifikasi Setoran (Kecamatan)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -2189,23 +2259,23 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"status\": \"DITERIMA\",\n    \"catatan_kecamatan\": \"Setoran telah diverifikasi dan dana telah diterima di rekening kas kecamatan.\",\n    \"tanggal_diterima\": \"2026-08-12\"\n}"
+                            "raw": "{\n    \"status\": \"DITERIMA\",\n    \"penerima_nama\": \"Drs. H. Mulyadi\",\n    \"penerima_nip\": \"19700101 199501 1 001\",\n    \"keterangan_verifikasi\": \"Dana setoran telah dicek dan masuk ke Rekening Kas Daerah / Kecamatan.\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/setoran-kecamatan/1/verify",
+                            "raw": "{{baseUrl}}/setoran-kecamatan/3/verify",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "setoran-kecamatan",
-                                "1",
+                                "3",
                                 "verify"
                             ]
                         }
                     },
                     "response": [
                         {
-                            "name": "200 OK - Verifikasi Setoran Kecamatan",
+                            "name": "200 OK - Setoran Berhasil Diverifikasi",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -2215,12 +2285,12 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Verifikasi status setoran berhasil diubah menjadi DITERIMA.\",\n    \"data\": {\n        \"id\": 1,\n        \"status\": \"DITERIMA\",\n        \"catatan_kecamatan\": \"Setoran telah diverifikasi dan dana telah diterima di rekening kas kecamatan.\",\n        \"tanggal_diterima\": \"2026-08-12 14:30:00\"\n    }\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Status setoran berhasil diverifikasi menjadi DITERIMA.\",\n    \"data\": {\n        \"id\": 3,\n        \"status\": \"DITERIMA\",\n        \"penerima_nama\": \"Drs. H. Mulyadi\",\n        \"penerima_nip\": \"19700101 199501 1 001\",\n        \"keterangan_verifikasi\": \"Dana setoran telah dicek dan masuk ke Rekening Kas Daerah / Kecamatan.\",\n        \"tanggal_diterima\": \"2026-08-14 19:15:00\"\n    }\n}"
                         }
                     ]
                 },
                 {
-                    "name": "7. DELETE Hapus Data Setoran",
+                    "name": "8. DELETE Hapus Data Pengeluaran / Setoran",
                     "request": {
                         "method": "DELETE",
                         "header": [
@@ -2233,22 +2303,27 @@
                                 "key": "Accept",
                                 "value": "application/json",
                                 "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/setoran-kecamatan/1",
+                            "raw": "{{baseUrl}}/setoran-kecamatan/4",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "setoran-kecamatan",
-                                "1"
+                                "4"
                             ]
                         }
                     },
                     "response": [
                         {
-                            "name": "200 OK - Hapus Setoran Berhasil",
+                            "name": "200 OK - Data Berhasil Dihapus",
                             "status": "OK",
                             "code": 200,
                             "_postman_previewlanguage": "json",
@@ -2258,7 +2333,447 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data setoran berhasil dihapus.\"\n}"
+                            "body": "{\n    \"success\": true,\n    \"status\": \"success\",\n    \"message\": \"Data pengeluaran / setoran kas berhasil dihapus.\"\n}"
+                        }
+                    ]
+                }
+            ],
+            "description": "Modul manajemen transaksi pengeluaran kas desa, meliputi Setoran PBB-P2 ke Kas Kecamatan (memerlukan verifikasi Camat/Kecamatan) serta Pengeluaran Kas Internal Desa (otomatis disetujui / tanpa verifikasi kecamatan)."
+        },
+        {
+            "name": "09. Master Dusun Management",
+            "description": "Endpoint pengelolaan Master Dusun per Desa. Memungkinkan CRUD nama dusun terisolasi per tenant (Desa), penugasan wilayah untuk akun Kolektor, dan query format names untuk dropdown/selector dinamis.",
+            "item": [
+                {
+                    "name": "1. List Master Dusun (Filter Desa & Search)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns?desa_id=1&search=&status_aktif=true",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns"
+                            ],
+                            "query": [
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "status_aktif",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Master Dusun",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"desa_id\": 1,\n            \"nama_dusun\": \"BALOK\",\n            \"kode_dusun\": \"BLK\",\n            \"rt_rw\": \"RT 01-04 / RW 01\",\n            \"status_aktif\": true,\n            \"desa\": {\n                \"id\": 1,\n                \"kode_desa\": \"32.05.04.2002\",\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        },\n        {\n            \"id\": 2,\n            \"desa_id\": 1,\n            \"nama_dusun\": \"CIDERES\",\n            \"kode_dusun\": \"CDR\",\n            \"rt_rw\": \"RT 01-03 / RW 02\",\n            \"status_aktif\": true,\n            \"desa\": {\n                \"id\": 1,\n                \"kode_desa\": \"32.05.04.2002\",\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        },\n        {\n            \"id\": 3,\n            \"desa_id\": 1,\n            \"nama_dusun\": \"PUNCAK SARI\",\n            \"kode_dusun\": \"PNC\",\n            \"rt_rw\": \"RT 01-05 / RW 03\",\n            \"status_aktif\": true,\n            \"desa\": {\n                \"id\": 1,\n                \"kode_desa\": \"32.05.04.2002\",\n                \"nama_desa\": \"Desa Barudua\"\n            }\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "2. List Dusun Names Only (For Dropdown Selector)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns?format=names&desa_id=1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns"
+                            ],
+                            "query": [
+                                {
+                                    "key": "format",
+                                    "value": "names"
+                                },
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Array String Nama Dusun",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        \"BALOK\",\n        \"CIDERES\",\n        \"CIPEDES\",\n        \"PUNCAK SARI\"\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Create Master Dusun",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama_dusun\": \"Dusun Sindangsari\",\n    \"desa_id\": 1,\n    \"kode_dusun\": \"SDG01\",\n    \"rt_rw\": \"RT 01-04 / RW 02\",\n    \"status_aktif\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - Master Dusun Berhasil Ditambahkan",
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Master Dusun 'Dusun Sindangsari' berhasil ditambahkan.\",\n    \"data\": {\n        \"id\": 4,\n        \"desa_id\": 1,\n        \"nama_dusun\": \"Dusun Sindangsari\",\n        \"kode_dusun\": \"SDG01\",\n        \"rt_rw\": \"RT 01-04 / RW 02\",\n        \"status_aktif\": true\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Get Detail Dusun",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns/1",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns",
+                                "1"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Detail Master Dusun",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"desa_id\": 1,\n        \"nama_dusun\": \"BALOK\",\n        \"kode_dusun\": \"BLK\",\n        \"rt_rw\": \"RT 01-04 / RW 01\",\n        \"status_aktif\": true,\n        \"desa\": {\n            \"id\": 1,\n            \"kode_desa\": \"32.05.04.2002\",\n            \"nama_desa\": \"Desa Barudua\"\n        }\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Update Master Dusun",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama_dusun\": \"Dusun Sindangsari Indah\",\n    \"kode_dusun\": \"SDG01\",\n    \"rt_rw\": \"RT 01-06 / RW 02\",\n    \"status_aktif\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns/4",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns",
+                                "4"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Master Dusun Diperbarui",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data dusun 'Dusun Sindangsari Indah' berhasil diperbarui.\",\n    \"data\": {\n        \"id\": 4,\n        \"nama_dusun\": \"Dusun Sindangsari Indah\",\n        \"kode_dusun\": \"SDG01\",\n        \"rt_rw\": \"RT 01-06 / RW 02\",\n        \"status_aktif\": true\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "6. Toggle Status Aktif Dusun",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns/4/toggle-status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns",
+                                "4",
+                                "toggle-status"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Status Dusun Diubah",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Status dusun 'Dusun Sindangsari Indah' berhasil diubah.\",\n    \"data\": {\n        \"id\": 4,\n        \"status_aktif\": false\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "7. Delete Master Dusun",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/dusuns/4",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dusuns",
+                                "4"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - Dusun Berhasil Dihapus",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Data dusun berhasil dihapus.\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "10. Audit Logs & Activity Trail",
+            "description": "Endpoint monitoring log aktivitas sistem (audit trail). Mencatat rekam jejak aksi CREATE, UPDATE, DELETE, PAYMENT, VOID, dan VERIFIKASI lengkap dengan user_id, module, payload, dan IP address.",
+            "item": [
+                {
+                    "name": "1. List Audit Logs (Paginated & Multi-Tenant)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/audit-logs?per_page=15&desa_id=1&action=CREATE_SETORAN",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "audit-logs"
+                            ],
+                            "query": [
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                },
+                                {
+                                    "key": "desa_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "action",
+                                    "value": "CREATE_SETORAN"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK - List Audit Logs",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Audit logs berhasil dimuat\",\n    \"data\": [\n        {\n            \"id\": 101,\n            \"user_id\": 2,\n            \"action\": \"CREATE_SETORAN\",\n            \"module\": \"SETORAN_KECAMATAN\",\n            \"payload\": {\n                \"setoran_id\": 3,\n                \"nomor_bukti\": \"STR/3205042002/20260814/K9L1\",\n                \"nominal\": 5000000,\n                \"desa_id\": 1\n            },\n            \"ip_address\": \"127.0.0.1\",\n            \"created_at\": \"2026-08-14T19:05:00.000000Z\",\n            \"user\": {\n                \"id\": 2,\n                \"name\": \"Asep Setiawan, S.Kom\",\n                \"username\": \"admin.desa\",\n                \"role\": \"SUPER_ADMIN\"\n            }\n        }\n    ],\n    \"meta\": {\n        \"current_page\": 1,\n        \"last_page\": 1,\n        \"per_page\": 15,\n        \"total\": 1\n    }\n}"
                         }
                     ]
                 }
