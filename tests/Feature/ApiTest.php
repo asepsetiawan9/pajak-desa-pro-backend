@@ -455,4 +455,40 @@ class ApiTest extends TestCase
                 ->assertJsonPath('data.role_context', 'ADMIN_DESA');
         }
     }
+
+    public function test_cannot_create_expense_when_cash_balance_is_zero_or_exceeded()
+    {
+        $adminDesa = User::where('username', 'admin.desa')->first() ?? User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first();
+        $desaId = $adminDesa->desa_id ?? 1;
+
+        // 1. Uji saat saldo kas desa Rp 0 (karena DHKP LUNAS tahun 2030 adalah 0)
+        $failZeroResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
+            'kategori' => 'SETOR_KECAMATAN',
+            'tanggal_setor' => '2030-01-01',
+            'tahun' => 2030, // tahun tanpa realisasi lunas
+            'nominal' => 1000000,
+            'metode_setoran' => 'TRANSFER',
+            'penyetor_nama' => 'Asep',
+            'desa_id' => $desaId,
+        ]);
+
+        $failZeroResponse->assertStatus(400)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Saldo kas PBB-P2 desa saat ini Rp 0. Tidak dapat membuat pengeluaran baru sampai ada penerimaan pembayaran PBB-P2 yang masuk.');
+
+        // 2. Uji saat nominal melebihi sisa saldo kas (misal minta 999.000.000)
+        $failExceedResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
+            'kategori' => 'KEGIATAN_DESA',
+            'tanggal_setor' => '2026-08-12',
+            'tahun' => 2026,
+            'nominal' => 999000000000, // Nominal sangat besar melebihi kas
+            'metode_setoran' => 'TUNAI',
+            'penyetor_nama' => 'Asep',
+            'desa_id' => $desaId,
+        ]);
+
+        $failExceedResponse->assertStatus(400)
+            ->assertJsonPath('success', false);
+        $this->assertStringContainsString('melebihi sisa saldo kas PBB-P2 yang tersedia', $failExceedResponse->json('message'));
+    }
 }

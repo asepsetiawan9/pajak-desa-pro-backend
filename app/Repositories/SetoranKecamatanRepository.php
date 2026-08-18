@@ -227,6 +227,26 @@ class SetoranKecamatanRepository
     }
 
     /**
+     * Get remaining available village cash balance
+     */
+    public function getSisaKasDesa(int $desaId, int $tahun): float
+    {
+        $dhkpLunas = (float) DhkpRow::withoutGlobalScope(TenantScope::class)
+            ->where('desa_id', $desaId)
+            ->where('tahun', $tahun)
+            ->where('status_bayar', 'LUNAS')
+            ->sum('ketetapan_pbb');
+
+        $totalPengeluaranDiterima = (float) SetoranKecamatan::withoutGlobalScope(TenantScope::class)
+            ->where('desa_id', $desaId)
+            ->where('tahun', $tahun)
+            ->where('status', 'DITERIMA')
+            ->sum('nominal');
+
+        return max(0.0, $dhkpLunas - $totalPengeluaranDiterima);
+    }
+
+    /**
      * Create new setoran record
      */
     public function create(array $data): SetoranKecamatan

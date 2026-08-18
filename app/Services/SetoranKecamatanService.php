@@ -62,6 +62,19 @@ class SetoranKecamatanService
 
         $kategori = $data['kategori'] ?? 'SETOR_KECAMATAN';
         $data['kategori'] = $kategori;
+        $tahun = (int) ($data['tahun'] ?? date('Y'));
+        $nominal = (float) ($data['nominal'] ?? 0);
+
+        // Validasi Saldo Kas Desa: Jika Saldo Kas Rp 0 atau nominal melebihi sisa kas, tolak pengeluaran
+        if ($desaId) {
+            $sisaKas = $this->repository->getSisaKasDesa((int) $desaId, $tahun);
+            if ($sisaKas <= 0) {
+                throw new \Exception("Saldo kas PBB-P2 desa saat ini Rp 0. Tidak dapat membuat pengeluaran baru sampai ada penerimaan pembayaran PBB-P2 yang masuk.");
+            }
+            if ($nominal > $sisaKas) {
+                throw new \Exception("Nominal pengeluaran (Rp " . number_format($nominal, 0, ',', '.') . ") melebihi sisa saldo kas PBB-P2 yang tersedia (Rp " . number_format($sisaKas, 0, ',', '.') . ").");
+            }
+        }
 
         if ($kategori === 'SETOR_KECAMATAN') {
             $data['perlu_verifikasi_kecamatan'] = true;
@@ -103,6 +116,23 @@ class SetoranKecamatanService
 
         if (!$isSuperAdmin && !$isSameDesa) {
             throw new \Exception("Anda tidak memiliki wewenang untuk mengubah data desa ini.");
+        }
+
+        $desaId = $setoran->desa_id;
+        $tahun = (int) ($data['tahun'] ?? $setoran->tahun);
+        $nominalBaru = isset($data['nominal']) ? (float) $data['nominal'] : (float) $setoran->nominal;
+
+        // Validasi Saldo Kas Desa saat Edit
+        if ($desaId) {
+            $sisaKas = $this->repository->getSisaKasDesa((int) $desaId, $tahun);
+            // Kembalikan nominal lama ke buffer kapasitas jika transaksi lama sudah DITERIMA
+            $availableKas = $sisaKas + ($setoran->status === 'DITERIMA' ? (float) $setoran->nominal : 0.0);
+            if ($availableKas <= 0) {
+                throw new \Exception("Saldo kas PBB-P2 desa saat ini Rp 0. Tidak dapat memproses pengeluaran.");
+            }
+            if ($nominalBaru > $availableKas) {
+                throw new \Exception("Nominal pengeluaran (Rp " . number_format($nominalBaru, 0, ',', '.') . ") melebihi sisa saldo kas PBB-P2 yang tersedia (Rp " . number_format($availableKas, 0, ',', '.') . ").");
+            }
         }
 
         // Setiap kali data diedit oleh pihak desa, kembalikan status ke PENDING untuk verifikasi ulang
