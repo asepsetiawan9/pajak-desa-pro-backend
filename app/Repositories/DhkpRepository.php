@@ -7,6 +7,7 @@ use App\Models\DhkpRow;
 use App\Models\DusunTarget;
 use App\Scopes\TenantScope;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class DhkpRepository
 {
@@ -366,53 +367,103 @@ class DhkpRepository
 
     public function bulkUpsert(array $rows): array
     {
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+
         $created = 0;
         $updated = 0;
 
-        foreach ($rows as $data) {
-            if (empty($data['nop'])) continue;
+        if (empty($rows)) {
+            return [
+                'created' => 0,
+                'updated' => 0,
+                'total' => 0,
+            ];
+        }
 
-            $tahun = (int) ($data['tahun'] ?? 2026);
-            $ketetapan = (int) ($data['ketetapan_pbb'] ?? 0);
-            $denda = (int) ($data['denda'] ?? 0);
-            $enableFee = filter_var($this->settingRepository->getByKey('enable_fee_kolektor_luar_desa', true), FILTER_VALIDATE_BOOLEAN);
-            $defaultFee = $enableFee ? (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000) : 0;
-            $fee = isset($data['fee_kolektor']) ? (int) $data['fee_kolektor'] : ((($data['domisili'] ?? '') === 'LUAR_DESA') ? $defaultFee : 0);
-            
-            $payload = array_merge([
-                'nama_wp' => 'Tanpa Nama',
-                'alamat_wp' => '-',
-                'alamat_op' => '-',
-                'dusun' => 'Balok',
-                'blok' => 'Blok 01',
-                'rt_rw' => '001/001',
-                'luas_bumi' => 100,
-                'luas_bangunan' => 0,
-                'njop_bumi' => 100000,
-                'njop_bangunan' => 0,
-                'denda' => 0,
-                'fee_kolektor' => $fee,
-                'status_bayar' => 'BELUM_BAYAR',
-                'domisili' => 'DALAM_DESA',
-            ], $data);
+        // Cache settings once before looping to eliminate thousands of redundant queries
+        $enableFee = filter_var($this->settingRepository->getByKey('enable_fee_kolektor_luar_desa', true), FILTER_VALIDATE_BOOLEAN);
+        $defaultFee = $enableFee ? (int) $this->settingRepository->getByKey('fee_kolektor_luar_desa', 5000) : 0;
 
-            $payload['total_bayar'] = ((int) ($payload['ketetapan_pbb'] ?? 0)) + ((int) ($payload['denda'] ?? 0)) + ((int) ($payload['fee_kolektor'] ?? 0));
+        // Process in optimal chunk sizes
+        $chunks = array_chunk($rows, 500);
 
-            $desaId = (int) ($payload['desa_id'] ?? 1);
-            $existing = DhkpRow::withoutGlobalScope(TenantScope::class)
-                ->where('nop', $payload['nop'])
-                ->where('tahun', $tahun)
-                ->where('desa_id', $desaId)
-                ->first();
-            if ($existing) {
-                $existing->update($payload);
-                $this->syncTransactionForLunas($existing);
-                $updated++;
-            } else {
-                $row = DhkpRow::create($payload);
-                $this->syncTransactionForLunas($row);
-                $created++;
-            }
+        foreach ($chunks as $chunk) {
+            DB::transaction(function () use ($chunk, $defaultFee, &$created, &$updated) {
+                $nops = [];
+                $cleanRows = [];
+
+                foreach ($chunk as $data) {
+                    if (empty($data['nop'])) continue;
+                    $cleanNop = trim((string) $data['nop']);
+                    $nops[] = $cleanNop;
+                    $cleanRows[] = $data;
+                }
+
+                if (empty($cleanRows)) return;
+
+                $uniqueNops = array_values(array_unique($nops));
+
+                // Fetch all existing rows for this chunk in ONE single batch query
+                $existingCollection = DhkpRow::withoutGlobalScope(TenantScope::class)
+                    ->whereIn('nop', $uniqueNops)
+                    ->get();
+
+                $existingMap = [];
+                foreach ($existingCollection as $item) {
+                    $key = $item->nop . '_' . $item->tahun . '_' . $item->desa_id;
+                    $existingMap[$key] = $item;
+                }
+
+                foreach ($cleanRows as $data) {
+                    $nop = trim((string) $data['nop']);
+                    $tahun = (int) ($data['tahun'] ?? 2026);
+                    $desaId = (int) ($data['desa_id'] ?? 1);
+                    $fee = isset($data['fee_kolektor']) ? (int) $data['fee_kolektor'] : ((($data['domisili'] ?? '') === 'LUAR_DESA') ? $defaultFee : 0);
+
+                    $payload = array_merge([
+                        'nama_wp' => 'Tanpa Nama',
+                        'alamat_wp' => '-',
+                        'alamat_op' => '-',
+                        'dusun' => 'Balok',
+                        'blok' => 'Blok 01',
+                        'rt_rw' => '001/001',
+                        'luas_bumi' => 100,
+                        'luas_bangunan' => 0,
+                        'njop_bumi' => 100000,
+                        'njop_bangunan' => 0,
+                        'denda' => 0,
+                        'fee_kolektor' => $fee,
+                        'status_bayar' => 'BELUM_BAYAR',
+                        'domisili' => 'DALAM_DESA',
+                    ], $data);
+
+                    $payload['nop'] = $nop;
+                    $payload['tahun'] = $tahun;
+                    $payload['desa_id'] = $desaId;
+                    $payload['total_bayar'] = ((int) ($payload['ketetapan_pbb'] ?? 0)) + ((int) ($payload['denda'] ?? 0)) + ((int) ($payload['fee_kolektor'] ?? 0));
+
+                    $key = $nop . '_' . $tahun . '_' . $desaId;
+                    $existing = $existingMap[$key] ?? null;
+
+                    if ($existing) {
+                        $existing->fill($payload);
+                        $existing->save();
+                        if ($existing->status_bayar === 'LUNAS') {
+                            $this->syncTransactionForLunas($existing);
+                        }
+                        $updated++;
+                    } else {
+                        $row = DhkpRow::create($payload);
+                        if ($row->status_bayar === 'LUNAS') {
+                            $this->syncTransactionForLunas($row);
+                        }
+                        // Update in-memory map to handle duplicate NOP occurrences within same import file
+                        $existingMap[$key] = $row;
+                        $created++;
+                    }
+                }
+            });
         }
 
         return [

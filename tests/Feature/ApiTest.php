@@ -179,6 +179,41 @@ class ApiTest extends TestCase
         ]);
     }
 
+    public function test_dhkp_large_scale_batch_import()
+    {
+        $user = User::first();
+        $testRows = [];
+        for ($i = 1; $i <= 600; $i++) {
+            $testRows[] = [
+                'nop' => sprintf('32.05.010.009.009-%04d.0', $i),
+                'nama_wp' => "WAJIB PAJAK MASSAL {$i}",
+                'dusun' => 'BALOK',
+                'blok' => 'Blok 01',
+                'ketetapan_pbb' => 50000 + ($i * 100),
+                'domisili' => ($i % 2 === 0) ? 'LUAR_DESA' : 'DALAM_DESA',
+                'tahun' => 2026,
+            ];
+        }
+
+        $response = $this->actingAs($user)->postJson('/api/v1/dhkp/import', [
+            'rows' => $testRows,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.total', 600);
+
+        $this->assertDatabaseHas('dhkp_rows', [
+            'nop' => '32.05.010.009.009-0001.0',
+            'nama_wp' => 'WAJIB PAJAK MASSAL 1',
+        ]);
+
+        $this->assertDatabaseHas('dhkp_rows', [
+            'nop' => '32.05.010.009.009-0600.0',
+            'nama_wp' => 'WAJIB PAJAK MASSAL 600',
+        ]);
+    }
+
     public function test_settings_update_persists_identity_and_instansi()
     {
         $user = User::first();
