@@ -78,6 +78,7 @@ Route::prefix('v1')->group(function () {
 
         // Setoran ke Kecamatan Routes
         Route::get('/setoran-kecamatan/summary', [SetoranKecamatanController::class, 'summary']);
+        Route::get('/setoran-kecamatan/pending-reviews', [SetoranKecamatanController::class, 'pendingReviews']);
         Route::get('/setoran-kecamatan', [SetoranKecamatanController::class, 'index']);
         Route::get('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'show']);
         Route::post('/setoran-kecamatan', [SetoranKecamatanController::class, 'store']);

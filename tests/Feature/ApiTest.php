@@ -412,4 +412,47 @@ class ApiTest extends TestCase
         $delRes->assertStatus(200)
             ->assertJsonPath('success', true);
     }
+
+    public function test_setoran_kecamatan_pending_reviews_endpoint()
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first() ?? User::first();
+        $kades = User::where('role', 'KEPALA_DESA')->first();
+        $adminDesa = User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first() ?? $kades;
+
+        // 1. Hit pending reviews as Super Admin (Kecamatan)
+        $resSuperAdmin = $this->actingAs($superAdmin)->getJson('/api/v1/setoran-kecamatan/pending-reviews');
+        $resSuperAdmin->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.role_context', 'KECAMATAN')
+            ->assertJsonStructure([
+                'data' => [
+                    'role_context',
+                    'review_label',
+                    'need_action_count',
+                    'counts' => [
+                        'tambah_edit',
+                        'permohonan_hapus',
+                        'ditolak',
+                        'total_pending',
+                    ],
+                    'items',
+                ]
+            ]);
+
+        // 2. Hit pending reviews as Kepala Desa
+        if ($kades) {
+            $resKades = $this->actingAs($kades)->getJson('/api/v1/setoran-kecamatan/pending-reviews');
+            $resKades->assertStatus(200)
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.role_context', 'KEPALA_DESA');
+        }
+
+        // 3. Hit pending reviews as Admin Desa
+        if ($adminDesa) {
+            $resAdminDesa = $this->actingAs($adminDesa)->getJson('/api/v1/setoran-kecamatan/pending-reviews');
+            $resAdminDesa->assertStatus(200)
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.role_context', 'ADMIN_DESA');
+        }
+    }
 }

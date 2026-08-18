@@ -268,4 +268,72 @@ class SetoranKecamatanRepository
     {
         return $setoran->delete();
     }
+
+    /**
+     * Get pending reviews data & counts scoped by user role & village
+     */
+    public function getPendingReviewsData(?int $desaId = null): array
+    {
+        $user = auth()->user();
+        $isSuperAdmin = $this->isSuperAdmin();
+        $role = $user?->role ?? 'SUPER_ADMIN_SYSTEM';
+        $userDesaId = $user?->desa_id;
+
+        // Base Query
+        $baseQuery = $isSuperAdmin
+            ? SetoranKecamatan::withoutGlobalScope(TenantScope::class)->with(['desa:id,nama_desa,kode_desa', 'creator:id,name'])
+            : SetoranKecamatan::query()->with(['desa:id,nama_desa,kode_desa', 'creator:id,name']);
+
+        if ($isSuperAdmin && $desaId) {
+            $baseQuery->where('desa_id', $desaId);
+        }
+
+        // Logic per role
+        if ($isSuperAdmin) {
+            // Admin Kecamatan HANYA memverifikasi transaksi SETOR_KECAMATAN
+            $pendingQuery = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->whereIn('status', ['PENDING', 'PENDING_HAPUS']);
+            $tambahEditCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING')->count();
+            $hapusCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING_HAPUS')->count();
+            $ditolakCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'DITOLAK')->count();
+            $needActionCount = $tambahEditCount + $hapusCount;
+            $roleContext = 'KECAMATAN';
+            $reviewLabel = 'Verifikasi Setoran Kecamatan';
+        } elseif ($role === 'KEPALA_DESA') {
+            // Kepala Desa HANYA menyetujui pengeluaran internal desa
+            $pendingQuery = (clone $baseQuery)->where('kategori', '!=', 'SETOR_KECAMATAN')->whereIn('status', ['PENDING', 'PENDING_HAPUS']);
+            $tambahEditCount = (clone $baseQuery)->where('kategori', '!=', 'SETOR_KECAMATAN')->where('status', 'PENDING')->count();
+            $hapusCount = (clone $baseQuery)->where('kategori', '!=', 'SETOR_KECAMATAN')->where('status', 'PENDING_HAPUS')->count();
+            $ditolakCount = (clone $baseQuery)->where('kategori', '!=', 'SETOR_KECAMATAN')->where('status', 'DITOLAK')->count();
+            $needActionCount = $tambahEditCount + $hapusCount;
+            $roleContext = 'KEPALA_DESA';
+            $reviewLabel = 'Persetujuan Pengeluaran Internal Desa';
+        } else {
+            // Admin Desa / Bendahara: memantau seluruh pengeluaran desa yang sedang diproses atau ditolak
+            $pendingQuery = (clone $baseQuery)->whereIn('status', ['PENDING', 'PENDING_HAPUS', 'DITOLAK']);
+            $tambahEditCount = (clone $baseQuery)->where('status', 'PENDING')->count();
+            $hapusCount = (clone $baseQuery)->where('status', 'PENDING_HAPUS')->count();
+            $ditolakCount = (clone $baseQuery)->where('status', 'DITOLAK')->count();
+            $needActionCount = $tambahEditCount + $hapusCount + $ditolakCount;
+            $roleContext = 'ADMIN_DESA';
+            $reviewLabel = 'Status Pengajuan Pengeluaran Desa';
+        }
+
+        $latestItems = $pendingQuery->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->get();
+
+        return [
+            'role_context' => $roleContext,
+            'review_label' => $reviewLabel,
+            'need_action_count' => $needActionCount,
+            'counts' => [
+                'tambah_edit' => $tambahEditCount,
+                'permohonan_hapus' => $hapusCount,
+                'ditolak' => $ditolakCount,
+                'total_pending' => $tambahEditCount + $hapusCount,
+            ],
+            'items' => $latestItems,
+        ];
+    }
 }

@@ -59,6 +59,24 @@ class SetoranKecamatanController extends Controller
     }
 
     /**
+     * GET /api/v1/setoran-kecamatan/pending-reviews
+     */
+    public function pendingReviews(Request $request): JsonResponse
+    {
+        $desaId = $request->filled('desa_id') && $request->input('desa_id') !== 'ALL' && $request->input('desa_id') !== 'all'
+            ? (int) $request->input('desa_id')
+            : null;
+
+        $reviews = $this->service->getPendingReviews($desaId);
+
+        return response()->json([
+            'success' => true,
+            'status' => 'success',
+            'data' => $reviews,
+        ]);
+    }
+
+    /**
      * GET /api/v1/setoran-kecamatan/{id}
      */
     public function show(int $id): JsonResponse
@@ -179,7 +197,7 @@ class SetoranKecamatanController extends Controller
     public function verify(Request $request, int $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:DITERIMA,DITOLAK,PENDING',
+            'status' => 'required|in:DITERIMA,DITOLAK,PENDING,PENDING_HAPUS,APPROVE_DELETE,REJECT_DELETE',
             'catatan_kecamatan' => 'nullable|string',
             'tanggal_diterima' => 'nullable|date',
         ]);
@@ -201,10 +219,19 @@ class SetoranKecamatanController extends Controller
                 $request->input('tanggal_diterima')
             );
 
+            if ($setoran === null) {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'success',
+                    'message' => 'Permohonan penghapusan telah disetujui dan data berhasil dihapus permanen.',
+                    'data' => null,
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
                 'status' => 'success',
-                'message' => "Verifikasi status setoran berhasil diubah menjadi {$setoran->status}.",
+                'message' => "Verifikasi status pengeluaran berhasil diperbarui menjadi {$setoran->status}.",
                 'data' => $setoran,
             ]);
         } catch (\Exception $e) {
@@ -222,11 +249,12 @@ class SetoranKecamatanController extends Controller
     public function destroy(int $id): JsonResponse
     {
         try {
-            $this->service->deleteSetoran($id);
+            $result = $this->service->deleteSetoran($id);
             return response()->json([
                 'success' => true,
                 'status' => 'success',
-                'message' => 'Data setoran berhasil dihapus.',
+                'message' => $result['message'],
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
