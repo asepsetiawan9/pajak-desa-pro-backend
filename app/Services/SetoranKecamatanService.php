@@ -63,8 +63,8 @@ class SetoranKecamatanService
             $data['status'] = $data['status'] ?? 'PENDING';
         } else {
             $data['perlu_verifikasi_kecamatan'] = false;
-            $data['status'] = 'DITERIMA';
-            $data['tanggal_diterima'] = now();
+            $data['status'] = $data['status'] ?? 'PENDING';
+            $data['tanggal_diterima'] = null;
         }
 
         $setoran = $this->repository->create($data);
@@ -97,7 +97,7 @@ class SetoranKecamatanService
         $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
 
         if ($setoran->status !== 'PENDING' && !$isSuperAdmin) {
-            throw new \Exception("Setoran yang sudah diproses oleh Kecamatan tidak dapat diubah.");
+            throw new \Exception("Catatan pengeluaran yang sudah diproses/disetujui tidak dapat diubah.");
         }
 
         $this->repository->update($setoran, $data);
@@ -108,7 +108,7 @@ class SetoranKecamatanService
     {
         $setoran = $this->repository->findById($id);
         if (!$setoran) {
-            throw new \Exception("Data setoran tidak ditemukan.");
+            throw new \Exception("Data catatan pengeluaran/setoran tidak ditemukan.");
         }
 
         if (!in_array($status, ['DITERIMA', 'DITOLAK', 'PENDING'])) {
@@ -116,6 +116,22 @@ class SetoranKecamatanService
         }
 
         $user = auth()->user();
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+        $isKades = $user && $user->role === 'KEPALA_DESA';
+
+        // Authorization check
+        if ($setoran->kategori === 'SETOR_KECAMATAN') {
+            if (!$isSuperAdmin) {
+                throw new \Exception("Verifikasi setoran ke kecamatan hanya dapat dilakukan oleh pihak Kecamatan.");
+            }
+        } else {
+            // Pengeluaran internal desa: hanya Kepala Desa dari desa terkait atau Super Admin System yang berhak ACC
+            $isSameDesaKades = $isKades && ((int)$user->desa_id === (int)$setoran->desa_id);
+            if (!$isSuperAdmin && !$isSameDesaKades) {
+                throw new \Exception("Persetujuan (ACC) pengeluaran internal desa hanya dapat dilakukan oleh Kepala Desa terkait.");
+            }
+        }
+
         $this->repository->verify($setoran, $status, $catatanKecamatan, $tanggalDiterima);
 
         AuditLog::create([
@@ -125,6 +141,7 @@ class SetoranKecamatanService
             'payload' => [
                 'setoran_id' => $setoran->id,
                 'nomor_bukti' => $setoran->nomor_bukti,
+                'kategori' => $setoran->kategori,
                 'status' => $status,
                 'catatan' => $catatanKecamatan,
                 'desa_id' => $setoran->desa_id,

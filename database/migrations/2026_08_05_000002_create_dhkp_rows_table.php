@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('alamat_wp')->nullable();
             $table->string('alamat_op')->nullable();
             $table->string('dusun', 50);
-            $table->string('blok', 20);
-            $table->string('rt_rw', 20)->nullable();
+            $table->string('blok', 100);
+            $table->string('rt_rw', 50)->nullable();
             $table->integer('luas_bumi')->default(0);
             $table->integer('luas_bangunan')->default(0);
             $table->bigInteger('njop_bumi')->default(0);

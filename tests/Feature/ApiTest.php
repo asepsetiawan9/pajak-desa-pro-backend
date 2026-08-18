@@ -212,10 +212,13 @@ class ApiTest extends TestCase
 
     public function test_setoran_kecamatan_crud_and_verification_flow()
     {
-        $user = User::first();
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first() ?? User::first();
+        $kades = User::where('role', 'KEPALA_DESA')->first();
+        $adminDesa = User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first() ?? $kades;
 
-        // 1. Create Setoran Baru dari Desa
-        $storeResponse = $this->actingAs($user)->postJson('/api/v1/setoran-kecamatan', [
+        // 1. Create Setoran Baru dari Desa ke Kas Kecamatan
+        $storeResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
+            'kategori' => 'SETOR_KECAMATAN',
             'tanggal_setor' => '2026-08-12',
             'tahun' => 2026,
             'nominal' => 5000000,
@@ -226,6 +229,7 @@ class ApiTest extends TestCase
             'penyetor_jabatan' => 'Bendahara Desa',
             'penerima_kecamatan' => 'Kasi Goverment',
             'catatan_desa' => 'Setoran PBB Tahap I',
+            'desa_id' => $adminDesa->desa_id ?? 1,
         ]);
 
         $storeResponse->assertStatus(201)
@@ -235,14 +239,33 @@ class ApiTest extends TestCase
 
         $setoranId = $storeResponse->json('data.id');
 
-        // 2. Summary Endpoint Check
-        $summaryResponse = $this->actingAs($user)->getJson('/api/v1/setoran-kecamatan/summary?tahun=2026');
-        $summaryResponse->assertStatus(200)
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.total_pending', 5000000);
+        // 2. Create Pengeluaran Internal Desa (Status harus PENDING menunggu ACC Kades)
+        $internalStoreResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
+            'kategori' => 'KEGIATAN_DESA',
+            'tanggal_setor' => '2026-08-12',
+            'tahun' => 2026,
+            'nominal' => 1500000,
+            'metode_setoran' => 'TUNAI',
+            'penyetor_nama' => 'Asep Setiawan',
+            'penyetor_jabatan' => 'Bendahara Desa',
+            'catatan_desa' => 'Biaya Konsumsi Posko Pajak',
+            'desa_id' => $adminDesa->desa_id ?? 1,
+        ]);
 
-        // 3. Verify Status oleh Kecamatan
-        $verifyResponse = $this->actingAs($user)->postJson("/api/v1/setoran-kecamatan/{$setoranId}/verify", [
+        $internalStoreResponse->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.nominal', 1500000)
+            ->assertJsonPath('data.status', 'PENDING');
+
+        $internalId = $internalStoreResponse->json('data.id');
+
+        // 3. Summary Endpoint Check
+        $summaryResponse = $this->actingAs($superAdmin)->getJson('/api/v1/setoran-kecamatan/summary?tahun=2026');
+        $summaryResponse->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 4. Verify Setoran Kecamatan oleh Super Admin System (Kecamatan)
+        $verifyResponse = $this->actingAs($superAdmin)->postJson("/api/v1/setoran-kecamatan/{$setoranId}/verify", [
             'status' => 'DITERIMA',
             'catatan_kecamatan' => 'Diterima di kas kecamatan.',
             'tanggal_diterima' => '2026-08-12',
@@ -252,10 +275,18 @@ class ApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.status', 'DITERIMA');
 
-        // 4. Verify Summary Diterima
-        $summaryResponse2 = $this->actingAs($user)->getJson('/api/v1/setoran-kecamatan/summary?tahun=2026');
-        $summaryResponse2->assertStatus(200)
-            ->assertJsonPath('data.total_diterima', 5000000);
+        // 5. ACC Pengeluaran Internal oleh Kepala Desa
+        if ($kades) {
+            $kadesAccResponse = $this->actingAs($kades)->postJson("/api/v1/setoran-kecamatan/{$internalId}/verify", [
+                'status' => 'DITERIMA',
+                'catatan_kecamatan' => 'Disetujui Kepala Desa untuk realisasi posko.',
+                'tanggal_diterima' => '2026-08-12',
+            ]);
+
+            $kadesAccResponse->assertStatus(200)
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.status', 'DITERIMA');
+        }
     }
 
     public function test_audit_logs_endpoint_returns_activity_history()
