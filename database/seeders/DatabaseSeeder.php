@@ -12,8 +12,6 @@ class DatabaseSeeder extends Seeder
             DesaSeeder::class,
             UserSeeder::class,
             SettingSeeder::class,
-            DusunTargetSeeder::class,
-            DhkpSeeder::class,
         ]);
     }
 }

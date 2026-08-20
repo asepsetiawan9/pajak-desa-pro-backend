@@ -15,6 +15,77 @@ class ApiTest extends TestCase
     {
         parent::setUp();
         $this->seed();
+
+        // Create test DHKP rows specifically for test execution
+        $kolektor = User::where('username', 'kolektor.balok')->first();
+        
+        DhkpRow::create([
+            'desa_id' => 1,
+            'nop' => '32.05.010.001.001-0001.0',
+            'nama_wp' => 'Wajib Pajak 1',
+            'alamat_wp' => 'KP. BALOK RT 001 RW 001',
+            'alamat_op' => 'KP. BALOK BLOK 01',
+            'dusun' => 'Balok',
+            'blok' => 'Blok 01',
+            'rt_rw' => '001/001',
+            'luas_bumi' => 100,
+            'luas_bangunan' => 50,
+            'njop_bumi' => 10000000,
+            'njop_bangunan' => 20000000,
+            'ketetapan_pbb' => 10000000,
+            'denda' => 0,
+            'fee_kolektor' => 0,
+            'total_bayar' => 10000000,
+            'status_bayar' => 'LUNAS',
+            'domisili' => 'DALAM_DESA',
+            'tanggal_bayar' => '2026-08-01 10:00:00',
+            'kolektor_id' => $kolektor?->id,
+            'tahun' => 2026,
+        ]);
+
+        DhkpRow::create([
+            'desa_id' => 1,
+            'nop' => '32.05.010.001.001-0002.0',
+            'nama_wp' => 'Wajib Pajak 2',
+            'alamat_wp' => 'KP. BALOK RT 002 RW 001',
+            'alamat_op' => 'KP. BALOK BLOK 01',
+            'dusun' => 'Balok',
+            'blok' => 'Blok 01',
+            'rt_rw' => '002/001',
+            'luas_bumi' => 120,
+            'luas_bangunan' => 60,
+            'njop_bumi' => 12000000,
+            'njop_bangunan' => 24000000,
+            'ketetapan_pbb' => 150000,
+            'denda' => 0,
+            'fee_kolektor' => 0,
+            'total_bayar' => 150000,
+            'status_bayar' => 'BELUM_BAYAR',
+            'domisili' => 'DALAM_DESA',
+            'tahun' => 2026,
+        ]);
+
+        DhkpRow::create([
+            'desa_id' => 2,
+            'nop' => '32.05.010.003.001-0001.0',
+            'nama_wp' => 'Wajib Pajak Desa 2',
+            'alamat_wp' => 'KP. PUNCAK SARI RT 001 RW 001',
+            'alamat_op' => 'KP. PUNCAK SARI BLOK 01',
+            'dusun' => 'Puncak Sari',
+            'blok' => 'Blok 01',
+            'rt_rw' => '001/001',
+            'luas_bumi' => 100,
+            'luas_bangunan' => 50,
+            'njop_bumi' => 10000000,
+            'njop_bangunan' => 20000000,
+            'ketetapan_pbb' => 200000,
+            'denda' => 0,
+            'fee_kolektor' => 0,
+            'total_bayar' => 200000,
+            'status_bayar' => 'BELUM_BAYAR',
+            'domisili' => 'DALAM_DESA',
+            'tahun' => 2026,
+        ]);
     }
 
     public function test_user_can_login_with_valid_credentials()

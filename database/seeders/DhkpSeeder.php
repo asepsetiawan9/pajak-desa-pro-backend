@@ -14,6 +14,12 @@ class DhkpSeeder extends Seeder
 {
     public function run(): void
     {
+        // 🛑 PERMANENT SAFETY GUARD:
+        // Seeder DHKP dinonaktifkan secara permanen untuk mencegah manipulasi / timpa data DHKP riil.
+        // Data DHKP wajib diinput / diimpor secara resmi melalui fitur Web Admin Desa.
+        $this->command?->warn('⚠️ DhkpSeeder dinonaktifkan secara permanen. Data DHKP wajib diimpor melalui Web Admin.');
+        return;
+
         // Disable foreign key checks for clean cleanup on SQLite / MySQL
         $driver = DB::getDriverName();
         if ($driver === 'sqlite') {
