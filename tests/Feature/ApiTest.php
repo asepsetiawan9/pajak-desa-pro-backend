@@ -491,4 +491,50 @@ class ApiTest extends TestCase
             ->assertJsonPath('success', false);
         $this->assertStringContainsString('melebihi sisa saldo kas PBB-P2 yang tersedia', $failExceedResponse->json('message'));
     }
+
+    public function test_mobile_login_allowed_only_for_kolektor_and_kades()
+    {
+        // 1. Kades can login to mobile
+        $kadesResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
+            ->postJson('/api/v1/auth/login', [
+                'username' => 'kades.barudua',
+                'password' => 'password123',
+            ]);
+        $kadesResponse->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 2. Kolektor can login to mobile
+        $kolektorResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
+            ->postJson('/api/v1/auth/login', [
+                'username' => 'kolektor.balok',
+                'password' => 'password123',
+            ]);
+        $kolektorResponse->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 3. Super Admin System is DENIED from mobile login
+        $superAdminResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
+            ->postJson('/api/v1/auth/login', [
+                'username' => 'superadmin',
+                'password' => 'superadmin123',
+            ]);
+        $superAdminResponse->assertStatus(422)
+            ->assertJsonValidationErrors(['username']);
+        $this->assertStringContainsString('hanya diizinkan untuk Kolektor dan Kepala Desa', $superAdminResponse->json('errors.username.0'));
+    }
+
+    public function test_auth_me_returns_normalized_user_structure()
+    {
+        $kades = User::where('username', 'kades.barudua')->first();
+        $response = $this->actingAs($kades)->getJson('/api/v1/auth/me');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'id', 'desa_id', 'name', 'username', 'email', 'role',
+                    'dusun_akses', 'status_aktif', 'desa'
+                ]
+            ]);
+    }
 }

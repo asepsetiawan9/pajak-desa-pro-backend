@@ -38,7 +38,8 @@ class SetoranKecamatanService
     public function createSetoran(array $data): SetoranKecamatan
     {
         $user = auth()->user();
-        $desaId = $data['desa_id'] ?? ($user ? $user->desa_id : null);
+        $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+        $desaId = $isSuperAdmin ? ($data['desa_id'] ?? ($user ? $user->desa_id : null)) : ($user ? $user->desa_id : null);
 
         // Fetch desa code for custom nomor_bukti
         $kodeDesa = 'DESA';
@@ -56,9 +57,7 @@ class SetoranKecamatanService
             $data['nomor_bukti'] = "STR/{$kodeDesa}/{$datePrefix}/{$randomSuffix}";
         }
 
-        if (empty($data['desa_id']) && $desaId) {
-            $data['desa_id'] = $desaId;
-        }
+        $data['desa_id'] = $desaId;
 
         $kategori = $data['kategori'] ?? 'SETOR_KECAMATAN';
         $data['kategori'] = $kategori;

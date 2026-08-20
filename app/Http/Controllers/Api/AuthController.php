@@ -58,7 +58,7 @@ class AuthController extends Controller
         }
 
         $normalizedRole = strtolower(str_replace('_', '', $user->role));
-        if ($clientPlatform === 'mobile' && !in_array($normalizedRole, ['kolektor', 'kepaladesa', 'superadminsystem'])) {
+        if ($clientPlatform === 'mobile' && !in_array($normalizedRole, ['kolektor', 'kepaladesa'])) {
             AuditLog::create([
                 'user_id' => $user->id,
                 'action' => 'LOGIN_DENIED',
@@ -73,7 +73,7 @@ class AuthController extends Controller
             ]);
 
             throw ValidationException::withMessages([
-                'username' => ['Akses aplikasi mobile hanya diizinkan untuk Admin Kecamatan, Kolektor, dan Kepala Desa.'],
+                'username' => ['Akses aplikasi mobile hanya diizinkan untuk Kolektor dan Kepala Desa.'],
             ]);
         }
 
@@ -132,7 +132,28 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $user,
+            'data' => [
+                'id' => $user->id,
+                'desa_id' => $user->desa_id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+                'dusun_akses' => $user->dusun_akses,
+                'status_aktif' => $user->status_aktif,
+                'desa' => $user->desa ? [
+                    'id' => $user->desa->id,
+                    'kode_desa' => $user->desa->kode_desa,
+                    'nama_desa' => $user->desa->nama_desa,
+                    'nama_kecamatan' => $user->desa->nama_kecamatan,
+                    'nama_kabupaten' => $user->desa->nama_kabupaten,
+                    'nama_provinsi' => $user->desa->nama_provinsi,
+                    'nama_kades' => $user->desa->nama_kades,
+                    'nip_kades' => $user->desa->nip_kades,
+                    'subdomain' => $user->desa->subdomain,
+                    'logo_path' => $user->desa->logo_path,
+                ] : null,
+            ],
         ]);
     }
 

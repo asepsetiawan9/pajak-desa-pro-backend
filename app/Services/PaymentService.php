@@ -143,6 +143,18 @@ class PaymentService
                 throw ValidationException::withMessages(['nops' => 'Beberapa NOP yang Anda pilih tidak ditemukan pada tahun ketetapan ini.']);
             }
 
+            $user = auth()->user();
+            $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+            if (!$isSuperAdmin && $user && $user->desa_id) {
+                foreach ($rows as $row) {
+                    if ($row->desa_id && (int) $row->desa_id !== (int) $user->desa_id) {
+                        throw ValidationException::withMessages([
+                            'nops' => "NOP {$row->nop} ({$row->nama_wp}) bukan milik desa penugasan Anda. Transaksi ditolak."
+                        ]);
+                    }
+                }
+            }
+
             // Check if any NOP is already paid
             foreach ($rows as $row) {
                 if ($row->status_bayar === 'LUNAS') {
@@ -233,6 +245,16 @@ class PaymentService
 
             if (!$transaction) {
                 throw ValidationException::withMessages(['transaction' => 'Transaksi tidak ditemukan.']);
+            }
+
+            $user = auth()->user();
+            $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
+            if (!$isSuperAdmin && $user && $user->desa_id) {
+                if ($transaction->desa_id && (int) $transaction->desa_id !== (int) $user->desa_id) {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Anda tidak memiliki wewenang untuk membatalkan transaksi desa lain.'
+                    ]);
+                }
             }
 
             if ($transaction->status_void) {

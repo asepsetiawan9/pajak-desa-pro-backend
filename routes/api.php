@@ -66,25 +66,29 @@ Route::prefix('v1')->group(function () {
         Route::patch('/dusuns/{id}/toggle-status', [DusunController::class, 'toggleStatus']);
         Route::delete('/dusuns/{id}', [DusunController::class, 'destroy']);
 
-        // Transactions & Kasir STTS Routes
+        // Transactions & Kasir STTS Routes (Protected with Rate Limiting)
         Route::get('/transactions', [TransactionController::class, 'index']);
         Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-        Route::post('/transactions', [TransactionController::class, 'pay']);
-        Route::post('/transactions/pay', [TransactionController::class, 'pay']);
-        Route::delete('/transactions/{id}', [TransactionController::class, 'void']);
-        Route::post('/transactions/{id}/void', [TransactionController::class, 'void']);
-        Route::post('/transactions/group', [TransactionController::class, 'createGroup']);
-        Route::post('/transactions/ungroup', [TransactionController::class, 'dissolveGroup']);
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::post('/transactions', [TransactionController::class, 'pay']);
+            Route::post('/transactions/pay', [TransactionController::class, 'pay']);
+            Route::delete('/transactions/{id}', [TransactionController::class, 'void']);
+            Route::post('/transactions/{id}/void', [TransactionController::class, 'void']);
+            Route::post('/transactions/group', [TransactionController::class, 'createGroup']);
+            Route::post('/transactions/ungroup', [TransactionController::class, 'dissolveGroup']);
+        });
 
-        // Setoran ke Kecamatan Routes
+        // Setoran ke Kecamatan Routes (Protected with Rate Limiting)
         Route::get('/setoran-kecamatan/summary', [SetoranKecamatanController::class, 'summary']);
         Route::get('/setoran-kecamatan/pending-reviews', [SetoranKecamatanController::class, 'pendingReviews']);
         Route::get('/setoran-kecamatan', [SetoranKecamatanController::class, 'index']);
         Route::get('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'show']);
-        Route::post('/setoran-kecamatan', [SetoranKecamatanController::class, 'store']);
-        Route::put('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'update']);
-        Route::post('/setoran-kecamatan/{id}/verify', [SetoranKecamatanController::class, 'verify']);
-        Route::delete('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'destroy']);
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::post('/setoran-kecamatan', [SetoranKecamatanController::class, 'store']);
+            Route::put('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'update']);
+            Route::post('/setoran-kecamatan/{id}/verify', [SetoranKecamatanController::class, 'verify']);
+            Route::delete('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'destroy']);
+        });
 
         // Reports Routes
         Route::get('/reports/21-column', [ReportController::class, 'report21Column']);
