@@ -25,7 +25,7 @@ Seluruh berkas Postman tersimpan pada folder `pajak-backend/postman/`:
 4. Di pojok kanan atas Postman, pilih Environment **"LENTERA (Layanan Elektronik Terpadu Pajak Daerah) - VPS Production"** (atau **Local**).
 
 ### 🌐 Variabel URL Backend yang Tersedia:
-- `{{baseUrl}}` ➔ `http://backend.barudua.initd.web.id/api/v1` *(Domain Resmi Produksi)*
+- `{{baseUrl}}` ➔ `http://backend.barudua.web.id/api/v1` *(Domain Resmi Produksi)*
 - `{{baseUrl_direct}}` ➔ `http://36.64.200.242:8827/api/v1` *(Direct Port VPS)*
 - Local: `http://127.0.0.1:8000/api/v1` *(Laravel Development Server)*
 
