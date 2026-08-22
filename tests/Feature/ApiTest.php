@@ -608,4 +608,52 @@ class ApiTest extends TestCase
                 ]
             ]);
     }
+
+    public function test_kolektor_target_and_performance_endpoints()
+    {
+        $adminDesa = User::where('username', 'admin.desa')->first() ?? User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first();
+        $kolektor = User::where('role', 'KOLEKTOR')->where('desa_id', $adminDesa->desa_id)->first();
+
+        // 1. Set Target as Admin Desa
+        if ($kolektor && $adminDesa) {
+            $setTargetRes = $this->actingAs($adminDesa)->postJson('/api/v1/kolektor-targets', [
+                'kolektor_id' => $kolektor->id,
+                'tahun' => 2026,
+                'target_nominal' => 25000000,
+                'target_sppt' => 300,
+                'catatan' => 'Target test 2026',
+            ]);
+            $setTargetRes->assertStatus(200)
+                ->assertJsonPath('success', true);
+
+            // 2. Get Targets
+            $targetsRes = $this->actingAs($adminDesa)->getJson('/api/v1/kolektor-targets?tahun=2026');
+            $targetsRes->assertStatus(200)
+                ->assertJsonPath('success', true);
+
+            // 3. Get Leaderboard
+            $leaderboardRes = $this->actingAs($adminDesa)->getJson('/api/v1/kolektor-targets/leaderboard?tahun=2026');
+            $leaderboardRes->assertStatus(200)
+                ->assertJsonPath('success', true);
+
+            // 4. Get Kolektor Detail
+            $detailRes = $this->actingAs($adminDesa)->getJson("/api/v1/kolektor-targets/{$kolektor->id}?tahun=2026");
+            $detailRes->assertStatus(200)
+                ->assertJsonPath('success', true)
+                ->assertJsonStructure([
+                    'data' => [
+                        'kolektor_id',
+                        'kolektor_name',
+                        'target_nominal',
+                        'realisasi_nominal',
+                        'persentase_nominal',
+                        'badge',
+                        'trend_harian',
+                        'trend_mingguan',
+                    ]
+                ]);
+        }
+    }
 }
+
+

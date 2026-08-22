@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DesaController;
 use App\Http\Controllers\Api\DhkpController;
 use App\Http\Controllers\Api\DusunController;
+use App\Http\Controllers\Api\KolektorTargetController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SetoranKecamatanController;
 use App\Http\Controllers\Api\SettingController;
@@ -89,6 +90,15 @@ Route::prefix('v1')->group(function () {
             Route::post('/setoran-kecamatan/{id}/verify', [SetoranKecamatanController::class, 'verify']);
             Route::delete('/setoran-kecamatan/{id}', [SetoranKecamatanController::class, 'destroy']);
         });
+
+        // Kolektor Target & Performance Routes
+        Route::get('/kolektor-targets/my-performance', [KolektorTargetController::class, 'myPerformance']);
+        Route::get('/kolektor-targets/leaderboard', [KolektorTargetController::class, 'leaderboard']);
+        Route::get('/kolektor-targets/{id}/dusun-breakdown', [KolektorTargetController::class, 'dusunBreakdown']);
+        Route::get('/kolektor-targets', [KolektorTargetController::class, 'index']);
+        Route::post('/kolektor-targets', [KolektorTargetController::class, 'store']);
+        Route::get('/kolektor-targets/{id}', [KolektorTargetController::class, 'show']);
+        Route::delete('/kolektor-targets/{id}', [KolektorTargetController::class, 'destroy']);
 
         // Reports Routes
         Route::get('/reports/21-column', [ReportController::class, 'report21Column']);
