@@ -654,6 +654,61 @@ class ApiTest extends TestCase
                 ]);
         }
     }
+
+    public function test_dhkp_bulk_reset_with_preview_and_security_guards(): void
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+        $adminDesa = User::where('username', 'admin.desa')->first();
+
+        // 1. Preview count as Super Admin
+        $previewRes = $this->actingAs($superAdmin)->getJson('/api/v1/dhkp/reset-preview?tahun=2026&desa_id=1');
+        $previewRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_dhkp',
+                    'total_ketetapan',
+                    'sppt_lunas',
+                    'sppt_belum',
+                    'total_transaksi',
+                ]
+            ]);
+
+        // 2. Non-Super Admin cannot preview reset
+        $deniedPreview = $this->actingAs($adminDesa)->getJson('/api/v1/dhkp/reset-preview?tahun=2026&desa_id=1');
+        $deniedPreview->assertStatus(403);
+
+        // 3. Reset rejected if wrong password
+        $wrongPassRes = $this->actingAs($superAdmin)->postJson('/api/v1/dhkp/reset', [
+            'tahun' => 2026,
+            'desa_id' => 1,
+            'password' => 'wrongpassword',
+        ]);
+        $wrongPassRes->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        // 4. Non-Super Admin cannot execute reset even with their password
+        $nonSaRes = $this->actingAs($adminDesa)->postJson('/api/v1/dhkp/reset', [
+            'tahun' => 2026,
+            'desa_id' => 1,
+            'password' => 'admin123',
+        ]);
+        $nonSaRes->assertStatus(403);
+
+        // 5. Successful reset with valid Super Admin password
+        $validResetRes = $this->actingAs($superAdmin)->postJson('/api/v1/dhkp/reset', [
+            'tahun' => 2026,
+            'desa_id' => 1,
+            'password' => 'superadmin123',
+        ]);
+        $validResetRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 6. Verify DHKP Desa 1 is wiped, but Desa 2 remains intact
+        $this->assertEquals(0, DhkpRow::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('desa_id', 1)->where('tahun', 2026)->count());
+        $this->assertGreaterThan(0, DhkpRow::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('desa_id', 2)->where('tahun', 2026)->count());
+    }
 }
+
 
 

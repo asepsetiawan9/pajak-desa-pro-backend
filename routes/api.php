@@ -51,11 +51,15 @@ Route::prefix('v1')->group(function () {
 
         // DHKP & Master SPPT Routes
         Route::get('/dhkp/summary', [DhkpController::class, 'summary']);
+        Route::get('/dhkp/reset-preview', [DhkpController::class, 'previewReset']);
         Route::get('/dhkp', [DhkpController::class, 'index']);
         Route::get('/dhkp/{id}', [DhkpController::class, 'show']);
         Route::post('/dhkp', [DhkpController::class, 'store']);
         Route::put('/dhkp/{id}', [DhkpController::class, 'update']);
         Route::post('/dhkp/import', [DhkpController::class, 'import']);
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::post('/dhkp/reset', [DhkpController::class, 'resetByTahunDesa']);
+        });
         Route::delete('/dhkp/{id}', [DhkpController::class, 'destroy']);
 
         // Dusun Routes (Master Dusun & Per-Desa Scope)

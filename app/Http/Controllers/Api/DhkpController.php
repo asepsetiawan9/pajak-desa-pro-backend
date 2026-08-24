@@ -191,4 +191,90 @@ class DhkpController extends Controller
             'data' => $result,
         ]);
     }
+
+    /**
+     * Preview: Hitung jumlah data DHKP yang akan dihapus.
+     * GET /api/v1/dhkp/reset-preview?tahun=2026&desa_id=1
+     */
+    public function previewReset(Request $request)
+    {
+        $user = $request->user();
+
+        // Role guard: hanya SUPER_ADMIN_SYSTEM
+        if (!$user || $user->role !== 'SUPER_ADMIN_SYSTEM') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Hanya Super Admin System yang diizinkan.',
+            ], 403);
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer|min:2020|max:2099',
+            'desa_id' => 'required|integer|exists:desas,id',
+        ]);
+
+        $preview = $this->dhkpService->previewReset(
+            (int) $request->tahun,
+            (int) $request->desa_id
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $preview,
+        ]);
+    }
+
+    /**
+     * Reset/Hapus massal data DHKP berdasarkan tahun pajak & desa.
+     * POST /api/v1/dhkp/reset {tahun, desa_id, password}
+     */
+    public function resetByTahunDesa(Request $request)
+    {
+        $user = $request->user();
+
+        // Role guard: hanya SUPER_ADMIN_SYSTEM
+        if (!$user || $user->role !== 'SUPER_ADMIN_SYSTEM') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Hanya Super Admin System yang diizinkan melakukan reset data DHKP.',
+            ], 403);
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer|min:2020|max:2099',
+            'desa_id' => 'required|integer|exists:desas,id',
+            'password' => 'required|string|min:1',
+        ]);
+
+        try {
+            $result = $this->dhkpService->resetDhkpByTahunDesa(
+                (int) $request->tahun,
+                (int) $request->desa_id,
+                $request->password,
+                $user
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => [
+                    'deleted_dhkp' => $result['deleted_dhkp'],
+                    'deleted_transactions' => $result['deleted_transactions'],
+                ],
+            ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 403);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $e->getResponse();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
+

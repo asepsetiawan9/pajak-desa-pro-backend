@@ -472,4 +472,82 @@ class DhkpRepository
             'total' => $created + $updated,
         ];
     }
+
+    /**
+     * Preview: Hitung jumlah data DHKP yang akan terhapus berdasarkan tahun & desa.
+     */
+    public function countByTahunDesa(int $tahun, int $desaId): array
+    {
+        $query = DhkpRow::withoutGlobalScope(TenantScope::class)
+            ->where('tahun', $tahun)
+            ->where('desa_id', $desaId);
+
+        $totalRows = (clone $query)->count();
+        $totalKetetapan = (int) (clone $query)->sum('ketetapan_pbb');
+        $lunasCount = (clone $query)->where('status_bayar', 'LUNAS')->count();
+        $belumCount = $totalRows - $lunasCount;
+        $transactionIds = (clone $query)->whereNotNull('transaksi_id')
+            ->pluck('transaksi_id')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return [
+            'total_dhkp' => $totalRows,
+            'total_ketetapan' => $totalKetetapan,
+            'sppt_lunas' => $lunasCount,
+            'sppt_belum' => $belumCount,
+            'total_transaksi' => count($transactionIds),
+        ];
+    }
+
+    /**
+     * Ambil semua transaction IDs terkait DHKP yang akan dihapus.
+     */
+    public function getTransactionIdsForReset(int $tahun, int $desaId): array
+    {
+        return DhkpRow::withoutGlobalScope(TenantScope::class)
+            ->where('tahun', $tahun)
+            ->where('desa_id', $desaId)
+            ->whereNotNull('transaksi_id')
+            ->pluck('transaksi_id')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Hapus massal semua DHKP berdasarkan tahun & desa, serta bersihkan transaksi terkait.
+     * Return: jumlah baris DHKP yang terhapus.
+     */
+    public function resetByTahunDesa(int $tahun, int $desaId): array
+    {
+        // Kumpulkan transaction IDs sebelum menghapus DHKP rows
+        $transactionIds = $this->getTransactionIdsForReset($tahun, $desaId);
+
+        // Hapus semua DHKP rows
+        $deletedDhkp = DhkpRow::withoutGlobalScope(TenantScope::class)
+            ->where('tahun', $tahun)
+            ->where('desa_id', $desaId)
+            ->delete();
+
+        // Hapus transaksi terkait
+        $deletedTransactions = 0;
+        if (!empty($transactionIds)) {
+            $deletedTransactions = \App\Models\TransactionRecord::withoutGlobalScope(TenantScope::class)
+                ->whereIn('id', $transactionIds)
+                ->delete();
+        }
+
+        // Reset realisasi dusun targets jika ada
+        DusunTarget::withoutGlobalScope(TenantScope::class)
+            ->where('desa_id', $desaId)
+            ->where('tahun', $tahun)
+            ->update(['realisasi_pbb' => 0]);
+
+        return [
+            'deleted_dhkp' => $deletedDhkp,
+            'deleted_transactions' => $deletedTransactions,
+        ];
+    }
 }
