@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\DhkpRow;
+use App\Models\User;
 use App\Repositories\DhkpRepository;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DhkpService
 {
@@ -119,4 +122,81 @@ class DhkpService
 
         return $result;
     }
+
+    /**
+     * Preview: Menghitung data yang akan dihapus tanpa melakukan penghapusan.
+     */
+    public function previewReset(int $tahun, int $desaId): array
+    {
+        return $this->dhkpRepository->countByTahunDesa($tahun, $desaId);
+    }
+
+    /**
+     * Reset/Hapus massal data DHKP berdasarkan tahun pajak & desa.
+     * Dilindungi oleh: role check + password verification + DB transaction + audit log.
+     */
+    public function resetDhkpByTahunDesa(int $tahun, int $desaId, string $password, User $executor): array
+    {
+        // SECURITY: Verifikasi role — hanya SUPER_ADMIN_SYSTEM
+        if ($executor->role !== 'SUPER_ADMIN_SYSTEM') {
+            throw new \Illuminate\Auth\Access\AuthorizationException(
+                'Hanya Super Admin System yang diizinkan melakukan reset data DHKP.'
+            );
+        }
+
+        // SECURITY: Verifikasi password
+        if (!Hash::check($password, $executor->password)) {
+            throw new \Illuminate\Validation\ValidationException(
+                \Illuminate\Support\Facades\Validator::make([], []),
+                response()->json([
+                    'success' => false,
+                    'message' => 'Password yang Anda masukkan salah. Operasi dibatalkan.',
+                ], 403)
+            );
+        }
+
+        // Preview dulu untuk audit log
+        $preview = $this->dhkpRepository->countByTahunDesa($tahun, $desaId);
+
+        if ($preview['total_dhkp'] === 0) {
+            return [
+                'deleted_dhkp' => 0,
+                'deleted_transactions' => 0,
+                'message' => 'Tidak ada data DHKP yang ditemukan untuk tahun dan desa yang dipilih.',
+            ];
+        }
+
+        // Eksekusi penghapusan dalam DB Transaction
+        $result = DB::transaction(function () use ($tahun, $desaId, $executor, $preview) {
+            $deleteResult = $this->dhkpRepository->resetByTahunDesa($tahun, $desaId);
+
+            // Catat di Audit Log
+            AuditLog::create([
+                'user_id' => $executor->id,
+                'action' => 'RESET_DHKP_MASSAL',
+                'module' => 'DHKP',
+                'payload' => [
+                    'tahun' => $tahun,
+                    'desa_id' => $desaId,
+                    'deleted_dhkp' => $deleteResult['deleted_dhkp'],
+                    'deleted_transactions' => $deleteResult['deleted_transactions'],
+                    'preview_total_ketetapan' => $preview['total_ketetapan'],
+                    'preview_sppt_lunas' => $preview['sppt_lunas'],
+                    'preview_sppt_belum' => $preview['sppt_belum'],
+                    'executor_name' => $executor->name,
+                    'executor_username' => $executor->username,
+                ],
+                'ip_address' => request()->ip(),
+            ]);
+
+            return $deleteResult;
+        });
+
+        return [
+            'deleted_dhkp' => $result['deleted_dhkp'],
+            'deleted_transactions' => $result['deleted_transactions'],
+            'message' => "Berhasil menghapus {$result['deleted_dhkp']} data DHKP dan {$result['deleted_transactions']} transaksi terkait.",
+        ];
+    }
 }
+
