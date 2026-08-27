@@ -92,7 +92,7 @@ class ApiTest extends TestCase
     {
         $response = $this->postJson('/api/v1/auth/login', [
             'username' => 'kades.barudua',
-            'password' => 'password123',
+            'password' => 'KadesBarudua@2026!',
         ]);
 
         $response->assertStatus(200)
@@ -419,7 +419,7 @@ class ApiTest extends TestCase
 
     public function test_dusun_endpoint_returns_scoped_list_per_desa()
     {
-        $adminDesa = User::where('username', 'admin.desa')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
         $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
 
         // 1. Admin Desa request dusuns for their own desa
@@ -437,7 +437,7 @@ class ApiTest extends TestCase
 
     public function test_master_dusun_crud_and_isolation()
     {
-        $adminDesa = User::where('username', 'admin.desa')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
         $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
 
         // 1. Admin Desa creates new dusun
@@ -569,7 +569,7 @@ class ApiTest extends TestCase
         $kadesResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
             ->postJson('/api/v1/auth/login', [
                 'username' => 'kades.barudua',
-                'password' => 'password123',
+                'password' => 'KadesBarudua@2026!',
             ]);
         $kadesResponse->assertStatus(200)
             ->assertJsonPath('success', true);
@@ -578,7 +578,7 @@ class ApiTest extends TestCase
         $kolektorResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
             ->postJson('/api/v1/auth/login', [
                 'username' => 'kolektor.balok',
-                'password' => 'password123',
+                'password' => 'KolektorBalok@2026!',
             ]);
         $kolektorResponse->assertStatus(200)
             ->assertJsonPath('success', true);
@@ -587,7 +587,7 @@ class ApiTest extends TestCase
         $superAdminResponse = $this->withHeaders(['X-Client-Platform' => 'mobile'])
             ->postJson('/api/v1/auth/login', [
                 'username' => 'superadmin',
-                'password' => 'superadmin123',
+                'password' => 'SuperAdmin@2026!',
             ]);
         $superAdminResponse->assertStatus(422)
             ->assertJsonValidationErrors(['username']);
@@ -611,7 +611,7 @@ class ApiTest extends TestCase
 
     public function test_kolektor_target_and_performance_endpoints()
     {
-        $adminDesa = User::where('username', 'admin.desa')->first() ?? User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first() ?? User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first();
         $kolektor = User::where('role', 'KOLEKTOR')->where('desa_id', $adminDesa->desa_id)->first();
 
         // 1. Set Target as Admin Desa
@@ -658,7 +658,7 @@ class ApiTest extends TestCase
     public function test_dhkp_bulk_reset_with_preview_and_security_guards(): void
     {
         $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
-        $adminDesa = User::where('username', 'admin.desa')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
 
         // 1. Preview count as Super Admin
         $previewRes = $this->actingAs($superAdmin)->getJson('/api/v1/dhkp/reset-preview?tahun=2026&desa_id=1');
@@ -691,7 +691,7 @@ class ApiTest extends TestCase
         $nonSaRes = $this->actingAs($adminDesa)->postJson('/api/v1/dhkp/reset', [
             'tahun' => 2026,
             'desa_id' => 1,
-            'password' => 'admin123',
+            'password' => 'AdminBarudua@2026!',
         ]);
         $nonSaRes->assertStatus(403);
 
@@ -699,7 +699,7 @@ class ApiTest extends TestCase
         $validResetRes = $this->actingAs($superAdmin)->postJson('/api/v1/dhkp/reset', [
             'tahun' => 2026,
             'desa_id' => 1,
-            'password' => 'superadmin123',
+            'password' => 'SuperAdmin@2026!',
         ]);
         $validResetRes->assertStatus(200)
             ->assertJsonPath('success', true);
