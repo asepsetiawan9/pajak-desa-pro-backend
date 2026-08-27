@@ -228,8 +228,20 @@ class BackupService
                 ]);
             }
 
+            // Desa isolation check for non-superadmin
+            if ($user->desa_id && str_contains(strtolower($safeName), 'desa_') && !str_contains(strtolower($safeName), "desa_{$user->desa_id}_")) {
+                throw ValidationException::withMessages([
+                    'auth' => 'Anda tidak memiliki hak akses untuk memulihkan cadangan desa lain.',
+                ]);
+            }
+
             $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-            if ($ext === 'json') {
+            if ($ext === 'sql') {
+                $sqlContent = File::get($path);
+                $result = $this->backupRepository->restoreFromSql($sqlContent, $targetDesaId);
+                $this->logRestoreAudit($user, $targetDesaId, ['format' => 'sql', 'total' => $result['total_restored']]);
+                return $result;
+            } elseif ($ext === 'json') {
                 $content = File::get($path);
                 $decoded = json_decode($content, true);
                 $tablesData = $decoded['data'] ?? $decoded;
@@ -245,8 +257,16 @@ class BackupService
                 }
             }
         } elseif (isset($payload['file_content'])) {
+            $rawContent = trim($payload['file_content']);
+            if (str_starts_with($rawContent, '--') || str_contains($rawContent, 'INSERT INTO')) {
+                // Direct SQL content
+                $result = $this->backupRepository->restoreFromSql($rawContent, $targetDesaId);
+                $this->logRestoreAudit($user, $targetDesaId, ['format' => 'sql', 'total' => $result['total_restored']]);
+                return $result;
+            }
+
             // Uploaded JSON direct
-            $decoded = json_decode($payload['file_content'], true);
+            $decoded = json_decode($rawContent, true);
             if (!is_array($decoded)) {
                 throw ValidationException::withMessages([
                     'file' => 'Format file backup tidak valid atau rusak.',
@@ -265,19 +285,27 @@ class BackupService
         $result = $this->backupRepository->restoreFromTablesData($tablesData, $targetDesaId);
 
         // Audit Log
+        $this->logRestoreAudit($user, $targetDesaId, [
+            'restored_tables' => array_keys($result['restored_counts'] ?? []),
+            'total_restored' => $result['total_restored'] ?? 0,
+        ]);
+
+        return $result;
+    }
+
+    /**
+     * Helper to log restore activity
+     */
+    protected function logRestoreAudit(User $user, ?int $targetDesaId, array $payload): void
+    {
         AuditLog::create([
             'user_id' => $user->id,
             'desa_id' => $targetDesaId ?? $user->desa_id,
             'action' => 'BACKUP_RESTORED',
             'module' => 'BACKUP',
-            'payload' => [
-                'restored_tables' => array_keys($result['restored_counts'] ?? []),
-                'total_restored' => $result['total_restored'] ?? 0,
-            ],
+            'payload' => $payload,
             'ip_address' => request()->ip() ?? '127.0.0.1',
         ]);
-
-        return $result;
     }
 
     /**

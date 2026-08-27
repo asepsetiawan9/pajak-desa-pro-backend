@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\DhkpRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApiTest extends TestCase
@@ -797,6 +798,57 @@ class ApiTest extends TestCase
         // Clean up sql backup
         $this->actingAs($superAdmin)->deleteJson("/api/v1/backups/{$sqlFilename}", [
             'password' => 'SuperAdmin@2026!',
+        ]);
+    }
+
+    public function test_scoped_desa_backup_and_restore_isolation(): void
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
+
+        // 1. Create scoped backup for Desa 1
+        $createRes = $this->actingAs($adminDesa)->postJson('/api/v1/backups', [
+            'format' => 'json',
+            'notes' => 'Test scoped desa 1 backup',
+        ]);
+        $createRes->assertStatus(201)
+            ->assertJsonPath('success', true);
+        $filename = $createRes->json('data.filename');
+
+        // 2. Insert dummy dusun in Desa 2 to test cross-tenant isolation
+        $desa2DusunId = DB::table('dusuns')->insertGetId([
+            'desa_id' => 2,
+            'nama_dusun' => 'DUSUN ISOLASI TEST DESA 2',
+            'status_aktif' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 3. Admin Desa 1 restores their backup
+        $restoreRes = $this->actingAs($adminDesa)->postJson('/api/v1/backups/restore', [
+            'filename' => $filename,
+            'password' => 'AdminBarudua@2026!',
+        ]);
+        $restoreRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 4. Assert that Desa 2 dummy record was NOT deleted during Desa 1 restore
+        $this->assertDatabaseHas('dusuns', [
+            'id' => $desa2DusunId,
+            'desa_id' => 2,
+            'nama_dusun' => 'DUSUN ISOLASI TEST DESA 2',
+        ]);
+
+        // 5. Assert Super Admin user (desa_id = null) is intact
+        $this->assertDatabaseHas('users', [
+            'username' => 'superadmin',
+            'role' => 'SUPER_ADMIN_SYSTEM',
+        ]);
+
+        // Clean up
+        DB::table('dusuns')->where('id', $desa2DusunId)->delete();
+        $this->actingAs($adminDesa)->deleteJson("/api/v1/backups/{$filename}", [
+            'password' => 'AdminBarudua@2026!',
         ]);
     }
 }

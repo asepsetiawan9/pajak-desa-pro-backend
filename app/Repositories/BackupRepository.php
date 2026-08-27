@@ -46,8 +46,12 @@ class BackupRepository
         foreach ($this->tables as $table) {
             if (Schema::hasTable($table)) {
                 $query = DB::table($table);
-                if ($desaId && Schema::hasColumn($table, 'desa_id')) {
-                    $query->where('desa_id', $desaId);
+                if ($desaId) {
+                    if (Schema::hasColumn($table, 'desa_id')) {
+                        $query->where('desa_id', $desaId);
+                    } elseif ($table === 'desas') {
+                        $query->where('id', $desaId);
+                    }
                 }
                 $count = $query->count();
                 $tableCounts[$table] = $count;
@@ -86,7 +90,7 @@ class BackupRepository
         foreach ($allFiles as $file) {
             $filename = $file->getFilename();
             // Optional filter by desa if naming convention contains desa_
-            if ($desaId && str_contains($filename, 'desa_') && !str_contains($filename, "desa_{$desaId}_")) {
+            if ($desaId && str_contains(strtolower($filename), 'desa_') && !str_contains(strtolower($filename), "desa_{$desaId}_")) {
                 continue;
             }
 
@@ -129,8 +133,12 @@ class BackupRepository
         foreach ($this->tables as $table) {
             if (Schema::hasTable($table)) {
                 $query = DB::table($table);
-                if ($desaId && Schema::hasColumn($table, 'desa_id')) {
-                    $query->where('desa_id', $desaId);
+                if ($desaId) {
+                    if (Schema::hasColumn($table, 'desa_id')) {
+                        $query->where('desa_id', $desaId);
+                    } elseif ($table === 'desas') {
+                        $query->where('id', $desaId);
+                    }
                 }
                 $rows = $query->get()->map(fn($row) => (array) $row)->toArray();
                 $payload[$table] = $rows;
@@ -288,15 +296,27 @@ class BackupRepository
                     $rows = $tablesData[$table];
                     $query = DB::table($table);
 
-                    if ($desaId && Schema::hasColumn($table, 'desa_id')) {
-                        // Only truncate/delete scoped desa records
-                        $query->where('desa_id', $desaId)->delete();
+                    if ($desaId) {
+                        if (Schema::hasColumn($table, 'desa_id')) {
+                            // Only delete scoped desa records
+                            $query->where('desa_id', $desaId)->delete();
+                        } elseif ($table === 'desas') {
+                            $query->where('id', $desaId)->delete();
+                        }
                     } else {
                         // Full system: Truncate / Delete all
                         $query->delete();
                     }
 
                     if (!empty($rows)) {
+                        // If restoring a specific desa, ensure desa_id is locked to target desa
+                        if ($desaId && Schema::hasColumn($table, 'desa_id')) {
+                            $rows = array_map(function ($row) use ($desaId) {
+                                $row['desa_id'] = $desaId;
+                                return $row;
+                            }, $rows);
+                        }
+
                         // Chunk inserts to avoid packet limit
                         $chunks = array_chunk($rows, 200);
                         foreach ($chunks as $chunk) {
@@ -318,6 +338,52 @@ class BackupRepository
                 'status' => true,
                 'restored_counts' => $restoredCounts,
                 'total_restored' => array_sum($restoredCounts),
+            ];
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if (isset($isMysql) && $isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Restore database directly from SQL dump content
+     */
+    public function restoreFromSql(string $sqlContent, ?int $desaId = null): array
+    {
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
+
+        DB::beginTransaction();
+        try {
+            if ($isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            }
+
+            // Split and run statements
+            $statements = array_filter(
+                array_map('trim', explode(";\n", $sqlContent)),
+                fn($q) => !empty($q) && !str_starts_with($q, '--')
+            );
+
+            foreach ($statements as $stmt) {
+                if (!empty($stmt)) {
+                    DB::unprepared($stmt . ';');
+                }
+            }
+
+            if ($isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'restored_format' => 'sql',
+                'statements_executed' => count($statements),
+                'total_restored' => count($statements),
             ];
         } catch (\Throwable $e) {
             DB::rollBack();
