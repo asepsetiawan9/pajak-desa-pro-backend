@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\DesaController;
 use App\Http\Controllers\Api\DhkpController;
 use App\Http\Controllers\Api\DusunController;
@@ -118,5 +119,13 @@ Route::prefix('v1')->group(function () {
         Route::put('/desas/{id}', [DesaController::class, 'update']);
         Route::patch('/desas/{id}/toggle-status', [DesaController::class, 'toggleStatus']);
         Route::delete('/desas/{id}', [DesaController::class, 'destroy']);
+
+        // Backup & Disaster Recovery Routes
+        Route::get('/backups/summary', [BackupController::class, 'summary']);
+        Route::get('/backups', [BackupController::class, 'index']);
+        Route::post('/backups', [BackupController::class, 'store']);
+        Route::get('/backups/{filename}/download', [BackupController::class, 'download']);
+        Route::delete('/backups/{filename}', [BackupController::class, 'destroy']);
+        Route::post('/backups/restore', [BackupController::class, 'restore']);
     });
 });
