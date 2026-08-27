@@ -67,10 +67,23 @@ class BackupController extends Controller
      */
     public function download(Request $request, string $filename): BinaryFileResponse
     {
-        $fileInfo = $this->backupService->getBackupForDownload($filename, $request->user());
+        $user = $request->user();
+        if (!$user && $request->query('token')) {
+            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($request->query('token'));
+            if ($pat) {
+                $user = $pat->tokenable;
+            }
+        }
+
+        if (!$user) {
+            abort(401, 'Unauthenticated');
+        }
+
+        $fileInfo = $this->backupService->getBackupForDownload($filename, $user);
 
         return response()->download($fileInfo['path'], $fileInfo['filename'], [
             'Content-Type' => $fileInfo['mime'],
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
         ]);
     }
 
