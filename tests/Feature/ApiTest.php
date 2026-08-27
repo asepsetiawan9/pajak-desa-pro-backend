@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\DhkpRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApiTest extends TestCase
@@ -707,6 +708,148 @@ class ApiTest extends TestCase
         // 6. Verify DHKP Desa 1 is wiped, but Desa 2 remains intact
         $this->assertEquals(0, DhkpRow::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('desa_id', 1)->where('tahun', 2026)->count());
         $this->assertGreaterThan(0, DhkpRow::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('desa_id', 2)->where('tahun', 2026)->count());
+    }
+
+    public function test_backup_data_lifecycle_and_security_endpoints(): void
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
+
+        // 1. Get Summary metrics
+        $summaryRes = $this->actingAs($superAdmin)->getJson('/api/v1/backups/summary');
+        $summaryRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'total_tables',
+                    'total_records',
+                    'table_counts',
+                    'total_backups_stored',
+                    'total_backup_size_bytes',
+                    'total_backup_size_human',
+                ]
+            ]);
+
+        // 2. Create Backup (JSON format)
+        $createJsonRes = $this->actingAs($superAdmin)->postJson('/api/v1/backups', [
+            'format' => 'json',
+            'notes' => 'Automated test json backup',
+        ]);
+        $createJsonRes->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'data' => [
+                    'filename',
+                    'format',
+                    'size_bytes',
+                    'total_records',
+                    'download_url',
+                ]
+            ]);
+        $jsonFilename = $createJsonRes->json('data.filename');
+
+        // 3. Create Backup (SQL format)
+        $createSqlRes = $this->actingAs($superAdmin)->postJson('/api/v1/backups', [
+            'format' => 'sql',
+            'notes' => 'Automated test sql backup',
+        ]);
+        $createSqlRes->assertStatus(201)
+            ->assertJsonPath('success', true);
+        $sqlFilename = $createSqlRes->json('data.filename');
+
+        // 4. List backups
+        $listRes = $this->actingAs($superAdmin)->getJson('/api/v1/backups');
+        $listRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+        $this->assertGreaterThanOrEqual(2, count($listRes->json('data')));
+
+        // 5. Download backup
+        $downloadRes = $this->actingAs($superAdmin)->getJson("/api/v1/backups/{$jsonFilename}/download");
+        $downloadRes->assertStatus(200);
+
+        // 6. Restore with WRONG password fails
+        $wrongRestoreRes = $this->actingAs($superAdmin)->postJson('/api/v1/backups/restore', [
+            'filename' => $jsonFilename,
+            'password' => 'wrongpass123',
+        ]);
+        $wrongRestoreRes->assertStatus(422);
+
+        // 7. Restore with VALID password succeeds
+        $validRestoreRes = $this->actingAs($superAdmin)->postJson('/api/v1/backups/restore', [
+            'filename' => $jsonFilename,
+            'password' => 'SuperAdmin@2026!',
+        ]);
+        $validRestoreRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 8. Delete backup with WRONG password fails
+        $wrongDelRes = $this->actingAs($superAdmin)->deleteJson("/api/v1/backups/{$jsonFilename}", [
+            'password' => 'invalidpass',
+        ]);
+        $wrongDelRes->assertStatus(422);
+
+        // 9. Delete backup with VALID password succeeds
+        $validDelRes = $this->actingAs($superAdmin)->deleteJson("/api/v1/backups/{$jsonFilename}", [
+            'password' => 'SuperAdmin@2026!',
+        ]);
+        $validDelRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // Clean up sql backup
+        $this->actingAs($superAdmin)->deleteJson("/api/v1/backups/{$sqlFilename}", [
+            'password' => 'SuperAdmin@2026!',
+        ]);
+    }
+
+    public function test_scoped_desa_backup_and_restore_isolation(): void
+    {
+        $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first();
+        $adminDesa = User::where('username', 'admin.barudua')->first();
+
+        // 1. Create scoped backup for Desa 1
+        $createRes = $this->actingAs($adminDesa)->postJson('/api/v1/backups', [
+            'format' => 'json',
+            'notes' => 'Test scoped desa 1 backup',
+        ]);
+        $createRes->assertStatus(201)
+            ->assertJsonPath('success', true);
+        $filename = $createRes->json('data.filename');
+
+        // 2. Insert dummy dusun in Desa 2 to test cross-tenant isolation
+        $desa2DusunId = DB::table('dusuns')->insertGetId([
+            'desa_id' => 2,
+            'nama_dusun' => 'DUSUN ISOLASI TEST DESA 2',
+            'status_aktif' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 3. Admin Desa 1 restores their backup
+        $restoreRes = $this->actingAs($adminDesa)->postJson('/api/v1/backups/restore', [
+            'filename' => $filename,
+            'password' => 'AdminBarudua@2026!',
+        ]);
+        $restoreRes->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        // 4. Assert that Desa 2 dummy record was NOT deleted during Desa 1 restore
+        $this->assertDatabaseHas('dusuns', [
+            'id' => $desa2DusunId,
+            'desa_id' => 2,
+            'nama_dusun' => 'DUSUN ISOLASI TEST DESA 2',
+        ]);
+
+        // 5. Assert Super Admin user (desa_id = null) is intact
+        $this->assertDatabaseHas('users', [
+            'username' => 'superadmin',
+            'role' => 'SUPER_ADMIN_SYSTEM',
+        ]);
+
+        // Clean up
+        DB::table('dusuns')->where('id', $desa2DusunId)->delete();
+        $this->actingAs($adminDesa)->deleteJson("/api/v1/backups/{$filename}", [
+            'password' => 'AdminBarudua@2026!',
+        ]);
     }
 }
 
