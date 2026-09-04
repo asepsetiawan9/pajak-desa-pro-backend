@@ -55,10 +55,10 @@ class BackupService
 
         $timestamp = date('Ymd_His');
         $scopeTag = $resolvedDesaId ? "DESA_{$resolvedDesaId}" : "FULL";
-        $baseFilename = "BACKUP_LENTERA_{$scopeTag}_{$timestamp}";
+        $baseFilename = "BACKUP_SIPABAR_{$scopeTag}_{$timestamp}";
 
         $metadata = [
-            'application' => 'LENTERA (Layanan Elektronik Terpadu Pajak Daerah)',
+            'application' => 'SIPABAR (Sistem Informasi Pajak Barudua)',
             'version' => '1.1.0',
             'created_at' => date('Y-m-d H:i:s'),
             'timestamp' => time(),

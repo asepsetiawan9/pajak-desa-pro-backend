@@ -30,7 +30,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/health', function () {
         return response()->json([
             'status' => 'ok',
-            'service' => 'LENTERA (Layanan Elektronik Terpadu Pajak Daerah) API',
+            'service' => 'SIPABAR (Sistem Informasi Pajak Barudua) API',
             'timestamp' => now()->toIso8601String(),
         ]);
     });
