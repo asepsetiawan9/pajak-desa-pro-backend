@@ -302,13 +302,8 @@ class DemoSukataniSeeder extends Seeder
             DusunTarget::updateOrCreate(
                 ['desa_id' => 1, 'nama_dusun' => $dusunName, 'tahun' => 2026],
                 [
-                    'target_nominal' => $data['pokok'],
                     'target_pbb' => $data['pokok'],
                     'realisasi_pbb' => $data['realisasi'],
-                    'target_sppt' => $data['sppt'],
-                    'jumlah_sppt' => $data['sppt'],
-                    'realisasi_sppt' => $data['sppt_lunas'],
-                    'persentase_capaian' => $data['pokok'] > 0 ? round(($data['realisasi'] / $data['pokok']) * 100, 2) : 0,
                 ]
             );
         }
@@ -316,20 +311,13 @@ class DemoSukataniSeeder extends Seeder
         // 7. Kolektor Targets (Performa Kolektor)
         if ($kolektor1) {
             $pokok1 = ($dusunTotals['DUSUN SUKATANI']['pokok'] ?? 0) + ($dusunTotals['DUSUN CIKUPA']['pokok'] ?? 0);
-            $realisasi1 = ($dusunTotals['DUSUN SUKATANI']['realisasi'] ?? 0) + ($dusunTotals['DUSUN CIKUPA']['realisasi'] ?? 0);
             $sppt1 = ($dusunTotals['DUSUN SUKATANI']['sppt'] ?? 0) + ($dusunTotals['DUSUN CIKUPA']['sppt'] ?? 0);
-            $spptLunas1 = ($dusunTotals['DUSUN SUKATANI']['sppt_lunas'] ?? 0) + ($dusunTotals['DUSUN CIKUPA']['sppt_lunas'] ?? 0);
 
             KolektorTarget::updateOrCreate(
                 ['desa_id' => 1, 'kolektor_id' => $kolektor1->id, 'tahun' => 2026],
                 [
                     'target_nominal' => $pokok1,
                     'target_sppt' => $sppt1,
-                    'realisasi_nominal' => $realisasi1,
-                    'realisasi_sppt' => $spptLunas1,
-                    'persentase_capaian' => $pokok1 > 0 ? round(($realisasi1 / $pokok1) * 100, 2) : 0,
-                    'estimasi_fee' => $spptLunas1 * 2000,
-                    'tier_badge' => 'GOLD',
                     'catatan' => 'Performa penagihan sangat baik di Dusun Sukatani dan Cikupa.',
                 ]
             );
@@ -337,20 +325,13 @@ class DemoSukataniSeeder extends Seeder
 
         if ($kolektor2) {
             $pokok2 = ($dusunTotals['DUSUN PASIRANGIN']['pokok'] ?? 0) + ($dusunTotals['DUSUN BABAKAN']['pokok'] ?? 0);
-            $realisasi2 = ($dusunTotals['DUSUN PASIRANGIN']['realisasi'] ?? 0) + ($dusunTotals['DUSUN BABAKAN']['realisasi'] ?? 0);
             $sppt2 = ($dusunTotals['DUSUN PASIRANGIN']['sppt'] ?? 0) + ($dusunTotals['DUSUN BABAKAN']['sppt'] ?? 0);
-            $spptLunas2 = ($dusunTotals['DUSUN PASIRANGIN']['sppt_lunas'] ?? 0) + ($dusunTotals['DUSUN BABAKAN']['sppt_lunas'] ?? 0);
 
             KolektorTarget::updateOrCreate(
                 ['desa_id' => 1, 'kolektor_id' => $kolektor2->id, 'tahun' => 2026],
                 [
                     'target_nominal' => $pokok2,
                     'target_sppt' => $sppt2,
-                    'realisasi_nominal' => $realisasi2,
-                    'realisasi_sppt' => $spptLunas2,
-                    'persentase_capaian' => $pokok2 > 0 ? round(($realisasi2 / $pokok2) * 100, 2) : 0,
-                    'estimasi_fee' => $spptLunas2 * 2000,
-                    'tier_badge' => 'SILVER',
                     'catatan' => 'Fokus penagihan tahap 2 di wilayah Dusun Babakan.',
                 ]
             );
