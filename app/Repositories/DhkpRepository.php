@@ -126,8 +126,11 @@ class DhkpRepository
     {
         if ($dhkpRow->status_bayar === 'LUNAS' && !$dhkpRow->transaksi_id) {
             $datePrefix = date('Ymd');
-            $randomSuffix = strtoupper(substr(md5(uniqid()), 0, 4));
-            $nomorStts = "STTS-DHKP-{$datePrefix}-{$randomSuffix}";
+            do {
+                $uniqueToken = strtoupper(bin2hex(random_bytes(5)));
+                $rowIdPart = $dhkpRow->id ? "{$dhkpRow->id}-" : "";
+                $nomorStts = "STTS-DHKP-{$datePrefix}-{$rowIdPart}{$uniqueToken}";
+            } while (\App\Models\TransactionRecord::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('nomor_stts', $nomorStts)->exists());
 
             $transaction = \App\Models\TransactionRecord::create([
                 'desa_id' => $dhkpRow->desa_id ?? auth()->user()?->desa_id ?? 1,

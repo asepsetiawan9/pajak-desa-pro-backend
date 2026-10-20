@@ -170,8 +170,10 @@ class PaymentService
 
             // Generate nomor STTS unik: STTS-YYYYMMDD-XXXX
             $datePrefix = date('Ymd');
-            $randomSuffix = strtoupper(substr(md5(uniqid()), 0, 4));
-            $nomorStts = "STTS-{$datePrefix}-{$randomSuffix}";
+            do {
+                $randomSuffix = strtoupper(bin2hex(random_bytes(4))) . '-' . sprintf('%04d', random_int(1000, 9999));
+                $nomorStts = "STTS-{$datePrefix}-{$randomSuffix}";
+            } while (\App\Models\TransactionRecord::withoutGlobalScope(\App\Scopes\TenantScope::class)->where('nomor_stts', $nomorStts)->exists());
 
             // Hitung kalkulasi
             foreach ($rows as $row) {
