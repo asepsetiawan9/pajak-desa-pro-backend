@@ -91,6 +91,8 @@ class KolektorTargetController extends Controller
             'target_nominal' => 'required|integer|min:0',
             'target_sppt' => 'nullable|integer|min:0',
             'desa_id' => 'nullable|integer|exists:desas,id',
+            'lokasi_tanah' => 'nullable|string|max:255',
+            'dusun_akses' => 'nullable|string|max:255',
             'catatan' => 'nullable|string|max:500',
         ]);
 

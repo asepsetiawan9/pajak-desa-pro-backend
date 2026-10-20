@@ -16,6 +16,7 @@ class DhkpRow extends Model
         'desa_id',
         'nop',
         'nama_wp',
+        'nama_aktual',
         'alamat_wp',
         'alamat_op',
         'dusun',
