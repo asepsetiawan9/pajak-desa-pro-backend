@@ -36,17 +36,46 @@ class DhkpRepository
             $query->where('tahun', $filters['tahun']);
         }
 
-        if (!empty($filters['dusun']) && $filters['dusun'] !== 'ALL') {
-            $dusuns = is_array($filters['dusun'])
+        if (!empty($filters['dusun']) && $filters['dusun'] !== 'ALL' && $filters['dusun'] !== 'all') {
+            $rawDusuns = is_array($filters['dusun'])
                 ? $filters['dusun']
                 : array_map('trim', explode(',', $filters['dusun']));
 
-            $query->where(function ($q) use ($dusuns) {
-                foreach ($dusuns as $index => $d) {
+            $expanded = [];
+            foreach ($rawDusuns as $d) {
+                $expanded[] = $d;
+                $upper = strtoupper(trim($d));
+                if ($upper === 'DUSUN 1' || $upper === 'BALOK' || str_contains($upper, 'DUSUN 1') || str_contains($upper, 'BALOK')) {
+                    $expanded[] = 'DUSUN 1';
+                    $expanded[] = 'Dusun 1';
+                    $expanded[] = 'BALOK';
+                    $expanded[] = 'Balok';
+                } elseif ($upper === 'DUSUN 2' || $upper === 'CIDERES' || str_contains($upper, 'DUSUN 2') || str_contains($upper, 'CIDERES')) {
+                    $expanded[] = 'DUSUN 2';
+                    $expanded[] = 'Dusun 2';
+                    $expanded[] = 'CIDERES';
+                    $expanded[] = 'Cideres';
+                } elseif ($upper === 'DUSUN 3' || $upper === 'PUNCAK SARI' || $upper === 'CIPEDES' || str_contains($upper, 'DUSUN 3') || str_contains($upper, 'PUNCAK') || str_contains($upper, 'CIPEDES')) {
+                    $expanded[] = 'DUSUN 3';
+                    $expanded[] = 'Dusun 3';
+                    $expanded[] = 'PUNCAK SARI';
+                    $expanded[] = 'Puncak Sari';
+                    $expanded[] = 'CIPEDES';
+                    $expanded[] = 'Cipedes';
+                } elseif ($upper === 'LUAR DESA' || $upper === 'LUAR_DESA' || str_contains($upper, 'LUAR')) {
+                    $expanded[] = 'LUAR DESA';
+                    $expanded[] = 'Luar Desa';
+                    $expanded[] = 'LUAR_DESA';
+                }
+            }
+            $expanded = array_values(array_unique($expanded));
+
+            $query->where(function ($q) use ($expanded) {
+                foreach ($expanded as $index => $d) {
                     if ($index === 0) {
-                        $q->where('dusun', 'LIKE', $d);
+                        $q->where('dusun', 'LIKE', "%{$d}%");
                     } else {
-                        $q->orWhere('dusun', 'LIKE', $d);
+                        $q->orWhere('dusun', 'LIKE', "%{$d}%");
                     }
                 }
             });
