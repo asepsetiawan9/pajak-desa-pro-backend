@@ -108,6 +108,19 @@ class DhkpController extends Controller
             $validated['desa_id'] = $user->desa_id ?? $validated['desa_id'] ?? 1;
         }
 
+        if (!empty($validated['dusun'])) {
+            $upper = strtoupper(trim($validated['dusun']));
+            if ($upper === 'BALOK' || $upper === 'DUSUN 1' || str_contains($upper, 'DUSUN 1') || str_contains($upper, 'BALOK')) {
+                $validated['dusun'] = 'DUSUN 1';
+            } elseif ($upper === 'CIDERES' || $upper === 'DUSUN 2' || str_contains($upper, 'DUSUN 2') || str_contains($upper, 'CIDERES')) {
+                $validated['dusun'] = 'DUSUN 2';
+            } elseif ($upper === 'PUNCAK SARI' || $upper === 'PUNCAK' || $upper === 'CIPEDES' || $upper === 'DUSUN 3' || str_contains($upper, 'DUSUN 3') || str_contains($upper, 'PUNCAK') || str_contains($upper, 'CIPEDES')) {
+                $validated['dusun'] = 'DUSUN 3';
+            } elseif ($upper === 'LUAR DESA' || $upper === 'LUAR_DESA' || str_contains($upper, 'LUAR')) {
+                $validated['dusun'] = 'LUAR DESA';
+            }
+        }
+
         $dhkp = $this->dhkpService->createSppt($validated);
 
         return response()->json([
@@ -144,6 +157,19 @@ class DhkpController extends Controller
 
         if (!$isSuperAdmin && isset($validated['desa_id'])) {
             unset($validated['desa_id']);
+        }
+
+        if (!empty($validated['dusun'])) {
+            $upper = strtoupper(trim($validated['dusun']));
+            if ($upper === 'BALOK' || $upper === 'DUSUN 1' || str_contains($upper, 'DUSUN 1') || str_contains($upper, 'BALOK')) {
+                $validated['dusun'] = 'DUSUN 1';
+            } elseif ($upper === 'CIDERES' || $upper === 'DUSUN 2' || str_contains($upper, 'DUSUN 2') || str_contains($upper, 'CIDERES')) {
+                $validated['dusun'] = 'DUSUN 2';
+            } elseif ($upper === 'PUNCAK SARI' || $upper === 'PUNCAK' || $upper === 'CIPEDES' || $upper === 'DUSUN 3' || str_contains($upper, 'DUSUN 3') || str_contains($upper, 'PUNCAK') || str_contains($upper, 'CIPEDES')) {
+                $validated['dusun'] = 'DUSUN 3';
+            } elseif ($upper === 'LUAR DESA' || $upper === 'LUAR_DESA' || str_contains($upper, 'LUAR')) {
+                $validated['dusun'] = 'LUAR DESA';
+            }
         }
 
         $dhkp = $this->dhkpService->updateSppt($id, $validated);
