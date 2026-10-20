@@ -394,6 +394,16 @@ class ApiTest extends TestCase
                 ->assertJsonPath('success', true)
                 ->assertJsonPath('data.status', 'DITERIMA');
         }
+
+        // 6. Test re-route: Update SETOR_KECAMATAN menjadi Internal (OPERASIONAL_DESA)
+        $updateToInternalResponse = $this->actingAs($adminDesa)->putJson("/api/v1/setoran-kecamatan/{$setoranId}", [
+            'kategori' => 'OPERASIONAL_DESA',
+            'catatan_desa' => 'Dialihkan menjadi Operasional Internal',
+        ]);
+        $updateToInternalResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.kategori', 'OPERASIONAL_DESA')
+            ->assertJsonPath('data.perlu_verifikasi_kecamatan', false);
     }
 
     public function test_audit_logs_endpoint_returns_activity_history()

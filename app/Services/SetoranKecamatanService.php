@@ -134,16 +134,18 @@ class SetoranKecamatanService
             }
         }
 
+        // Sinkronisasi tipe verifikasi berdasarkan kategori baru
+        $targetKategori = $data['kategori'] ?? $setoran->kategori;
+        $data['perlu_verifikasi_kecamatan'] = ($targetKategori === 'SETOR_KECAMATAN');
+
         // Setiap kali data diedit oleh pihak desa, kembalikan status ke PENDING untuk verifikasi ulang
         if (!$isSuperAdmin) {
             $data['status'] = 'PENDING';
             $data['tanggal_diterima'] = null;
             $data['penerima_user_id'] = null;
-            if ($setoran->kategori === 'SETOR_KECAMATAN' || ($data['kategori'] ?? '') === 'SETOR_KECAMATAN') {
-                $data['perlu_verifikasi_kecamatan'] = true;
+            if ($targetKategori === 'SETOR_KECAMATAN') {
                 $data['catatan_kecamatan'] = 'Data diedit oleh Desa, menunggu verifikasi ulang Kecamatan.';
             } else {
-                $data['perlu_verifikasi_kecamatan'] = false;
                 $data['catatan_kecamatan'] = 'Data diedit oleh Desa, menunggu ACC ulang Kepala Desa.';
             }
         }
