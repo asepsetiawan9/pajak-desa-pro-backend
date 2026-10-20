@@ -162,6 +162,24 @@ class DhkpRepository
         return $dhkpRow->fresh();
     }
 
+    /**
+     * Helper normalisasi NOP: ubah 18 digit angka ke format standar 32.XX.XXX.XXX.XXX-XXXX.X
+     */
+    public function formatNopStandard(string $nop): string
+    {
+        $clean = preg_replace('/[^0-9]/', '', $nop);
+        if (strlen($clean) === 18) {
+            return substr($clean, 0, 2) . '.' .
+                   substr($clean, 2, 2) . '.' .
+                   substr($clean, 4, 3) . '.' .
+                   substr($clean, 7, 3) . '.' .
+                   substr($clean, 10, 3) . '-' .
+                   substr($clean, 13, 4) . '.' .
+                   substr($clean, 17, 1);
+        }
+        return $nop;
+    }
+
     public function create(array $data): DhkpRow
     {
         $data['total_bayar'] = ($data['ketetapan_pbb'] ?? 0) + ($data['denda'] ?? 0) + ($data['fee_kolektor'] ?? 0);
@@ -169,8 +187,20 @@ class DhkpRepository
         $desaId = (int) ($data['desa_id'] ?? 1);
 
         if (!empty($data['nop'])) {
+            $cleanNop = trim((string) $data['nop']);
+            $standardNop = $this->formatNopStandard($cleanNop);
+            $cleanDigits = preg_replace('/[^0-9A-Za-z]/', '', $cleanNop);
+
             $existing = DhkpRow::withoutGlobalScope(TenantScope::class)
-                ->where('nop', $data['nop'])
+                ->where(function ($q) use ($cleanNop, $standardNop, $cleanDigits) {
+                    $q->where('nop', $cleanNop);
+                    if ($standardNop !== $cleanNop) {
+                        $q->orWhere('nop', $standardNop);
+                    }
+                    if ($cleanDigits !== '' && $cleanDigits !== $cleanNop) {
+                        $q->orWhere('nop', $cleanDigits);
+                    }
+                })
                 ->where('tahun', $tahun)
                 ->where('desa_id', $desaId)
                 ->first();
@@ -427,6 +457,17 @@ class DhkpRepository
                     if (empty($data['nop'])) continue;
                     $cleanNop = trim((string) $data['nop']);
                     $nops[] = $cleanNop;
+
+                    // Also search with standard format and raw digits to guarantee matching regardless of formatting in Excel
+                    $standardNop = $this->formatNopStandard($cleanNop);
+                    if ($standardNop !== $cleanNop) {
+                        $nops[] = $standardNop;
+                    }
+                    $digitsOnly = preg_replace('/[^0-9A-Za-z]/', '', $cleanNop);
+                    if ($digitsOnly !== '' && $digitsOnly !== $cleanNop) {
+                        $nops[] = $digitsOnly;
+                    }
+
                     $cleanRows[] = $data;
                 }
 
@@ -441,8 +482,20 @@ class DhkpRepository
 
                 $existingMap = [];
                 foreach ($existingCollection as $item) {
-                    $key = $item->nop . '_' . $item->tahun . '_' . $item->desa_id;
-                    $existingMap[$key] = $item;
+                    $keyExact = $item->nop . '_' . $item->tahun . '_' . $item->desa_id;
+                    $existingMap[$keyExact] = $item;
+
+                    $cleanItemNop = preg_replace('/[^0-9A-Za-z]/', '', $item->nop);
+                    if ($cleanItemNop !== '') {
+                        $keyClean = $cleanItemNop . '_' . $item->tahun . '_' . $item->desa_id;
+                        $existingMap[$keyClean] = $item;
+                    }
+
+                    $standardItemNop = $this->formatNopStandard($item->nop);
+                    if ($standardItemNop !== '') {
+                        $keyStandard = $standardItemNop . '_' . $item->tahun . '_' . $item->desa_id;
+                        $existingMap[$keyStandard] = $item;
+                    }
                 }
 
                 foreach ($cleanRows as $data) {
@@ -453,6 +506,7 @@ class DhkpRepository
 
                     $payload = array_merge([
                         'nama_wp' => 'Tanpa Nama',
+                        'nama_aktual' => $data['nama_wp'] ?? 'Tanpa Nama',
                         'alamat_wp' => '-',
                         'alamat_op' => '-',
                         'dusun' => 'Balok',
@@ -473,10 +527,22 @@ class DhkpRepository
                     $payload['desa_id'] = $desaId;
                     $payload['total_bayar'] = ((int) ($payload['ketetapan_pbb'] ?? 0)) + ((int) ($payload['denda'] ?? 0)) + ((int) ($payload['fee_kolektor'] ?? 0));
 
-                    $key = $nop . '_' . $tahun . '_' . $desaId;
-                    $existing = $existingMap[$key] ?? null;
+                    $keyExact = $nop . '_' . $tahun . '_' . $desaId;
+                    $cleanNopDigits = preg_replace('/[^0-9A-Za-z]/', '', $nop);
+                    $keyClean = $cleanNopDigits . '_' . $tahun . '_' . $desaId;
+                    $standardNop = $this->formatNopStandard($nop);
+                    $keyStandard = $standardNop . '_' . $tahun . '_' . $desaId;
+
+                    $existing = $existingMap[$keyExact] ?? $existingMap[$keyClean] ?? $existingMap[$keyStandard] ?? null;
 
                     if ($existing) {
+                        // Jika di database sudah LUNAS dan memiliki transaksi resmi, pertahankan status LUNAS jika file Excel defaultnya BELUM
+                        if ($existing->status_bayar === 'LUNAS' && ($payload['status_bayar'] ?? '') === 'BELUM_BAYAR' && $existing->transaksi_id) {
+                            $payload['status_bayar'] = 'LUNAS';
+                            $payload['transaksi_id'] = $existing->transaksi_id;
+                            $payload['tanggal_bayar'] = $existing->tanggal_bayar;
+                        }
+
                         $existing->fill($payload);
                         $existing->save();
                         if ($existing->status_bayar === 'LUNAS') {
@@ -489,7 +555,13 @@ class DhkpRepository
                             $this->syncTransactionForLunas($row);
                         }
                         // Update in-memory map to handle duplicate NOP occurrences within same import file
-                        $existingMap[$key] = $row;
+                        $existingMap[$keyExact] = $row;
+                        if ($cleanNopDigits !== '') {
+                            $existingMap[$keyClean] = $row;
+                        }
+                        if ($standardNop !== '') {
+                            $existingMap[$keyStandard] = $row;
+                        }
                         $created++;
                     }
                 }

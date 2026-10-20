@@ -249,6 +249,61 @@ class ApiTest extends TestCase
             'nop' => '32.05.010.009.009-9999.0',
             'nama_wp' => 'TEST IMPORT USER',
         ]);
+
+        // Re-import the exact same NOP with updated data (must OVERWRITE, not duplicate)
+        $reimportResponse = $this->actingAs($user)->postJson('/api/v1/dhkp/import', [
+            'rows' => [
+                [
+                    'nop' => '32.05.010.009.009-9999.0',
+                    'nama_wp' => 'TEST IMPORT USER UPDATED',
+                    'dusun' => 'BALOK',
+                    'blok' => 'Blok 02',
+                    'ketetapan_pbb' => 200000,
+                    'domisili' => 'DALAM_DESA',
+                    'tahun' => 2026,
+                ]
+            ]
+        ]);
+
+        $reimportResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.created', 0)
+            ->assertJsonPath('data.updated', 1);
+
+        $this->assertDatabaseHas('dhkp_rows', [
+            'nama_wp' => 'TEST IMPORT USER UPDATED',
+            'blok' => 'Blok 02',
+            'ketetapan_pbb' => 200000,
+        ]);
+        $this->assertEquals(1, DhkpRow::where('tahun', 2026)->where('nama_wp', 'like', 'TEST IMPORT USER%')->count());
+
+        // Re-import with unformatted digits NOP (must also OVERWRITE the existing formatted NOP)
+        $unformattedNop = '320501000900999990';
+        $unformattedResponse = $this->actingAs($user)->postJson('/api/v1/dhkp/import', [
+            'rows' => [
+                [
+                    'nop' => $unformattedNop,
+                    'nama_wp' => 'TEST RAW DIGITS OVERWRITE',
+                    'dusun' => 'BALOK',
+                    'blok' => 'Blok 03',
+                    'ketetapan_pbb' => 250000,
+                    'domisili' => 'DALAM_DESA',
+                    'tahun' => 2026,
+                ]
+            ]
+        ]);
+
+        $unformattedResponse->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.created', 0)
+            ->assertJsonPath('data.updated', 1);
+
+        $this->assertDatabaseHas('dhkp_rows', [
+            'nama_wp' => 'TEST RAW DIGITS OVERWRITE',
+            'blok' => 'Blok 03',
+            'ketetapan_pbb' => 250000,
+        ]);
+        $this->assertEquals(1, DhkpRow::where('tahun', 2026)->where('nama_wp', 'like', 'TEST%')->count());
     }
 
     public function test_dhkp_large_scale_batch_import()
