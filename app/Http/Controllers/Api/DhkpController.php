@@ -87,6 +87,7 @@ class DhkpController extends Controller
             'nop' => 'required|string|max:30',
             'desa_id' => 'nullable|integer',
             'nama_wp' => 'required|string|max:255',
+            'nama_aktual' => 'nullable|string|max:255',
             'alamat_wp' => 'nullable|string',
             'alamat_op' => 'nullable|string',
             'dusun' => 'required|string',
@@ -124,6 +125,7 @@ class DhkpController extends Controller
         $validated = $request->validate([
             'desa_id' => 'sometimes|nullable|integer',
             'nama_wp' => 'sometimes|string|max:255',
+            'nama_aktual' => 'sometimes|nullable|string|max:255',
             'alamat_wp' => 'nullable|string',
             'alamat_op' => 'nullable|string',
             'dusun' => 'sometimes|string',

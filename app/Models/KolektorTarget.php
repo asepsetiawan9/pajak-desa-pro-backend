@@ -16,6 +16,7 @@ class KolektorTarget extends Model
         'desa_id',
         'kolektor_id',
         'tahun',
+        'lokasi_tanah',
         'target_nominal',
         'target_sppt',
         'catatan',

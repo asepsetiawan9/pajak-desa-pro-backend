@@ -239,6 +239,7 @@ class KolektorTargetRepository
             [
                 'target_nominal' => $data['target_nominal'] ?? 0,
                 'target_sppt' => $data['target_sppt'] ?? 0,
+                'lokasi_tanah' => $data['lokasi_tanah'] ?? $data['dusun_akses'] ?? null,
                 'catatan' => $data['catatan'] ?? null,
             ]
         );
@@ -299,6 +300,7 @@ class KolektorTargetRepository
             'kolektor_name' => $target->kolektor->name ?? 'Unknown',
             'kolektor_username' => $target->kolektor->username ?? '',
             'dusun_akses' => $target->kolektor->dusun_akses ?? null,
+            'lokasi_tanah' => $target->lokasi_tanah ?? $target->kolektor->dusun_akses ?? null,
             'desa_id' => $target->desa_id,
             'nama_desa' => $target->desa->nama_desa ?? null,
             'tahun' => $target->tahun,

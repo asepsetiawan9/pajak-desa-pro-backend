@@ -69,6 +69,7 @@ class DhkpRepository
             $query->where(function ($q) use ($search) {
                 $q->where('nop', 'like', "%{$search}%")
                   ->orWhere('nama_wp', 'like', "%{$search}%")
+                  ->orWhere('nama_aktual', 'like', "%{$search}%")
                   ->orWhere('alamat_wp', 'like', "%{$search}%")
                   ->orWhere('alamat_op', 'like', "%{$search}%");
             });

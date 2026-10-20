@@ -180,6 +180,13 @@ class KolektorTargetService
             ]);
         }
 
+        // Update dusun akses / lokasi binaan kolektor jika disertakan
+        $lokasiAkses = $data['lokasi_tanah'] ?? $data['dusun_akses'] ?? null;
+        if (!empty($lokasiAkses)) {
+            $kolektor->dusun_akses = $lokasiAkses;
+            $kolektor->save();
+        }
+
         $target = $this->repository->upsertTarget($data);
 
         AuditLog::create([
