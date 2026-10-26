@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 class SetoranKecamatanRepository
 {
     /**
-     * Check if authenticated user is Super Admin
+     * Check if authenticated user is Super Admin System (Kecamatan / Pusat)
      */
     private function isSuperAdmin(): bool
     {
@@ -25,11 +25,27 @@ class SetoranKecamatanRepository
     }
 
     /**
+     * Check if authenticated user can view internal village expenses (Pengeluaran Internal Desa)
+     * Aturan Baku: Super Admin System (Kecamatan) maupun Super Admin (Admin Desa) DILARANG melihat pengeluaran kas internal desa.
+     * Hanya Kepala Desa & Bendahara yang berhak mengakses & melihat pengeluaran kas internal desa.
+     */
+    private function canViewInternalExpenses(): bool
+    {
+        $user = auth()->user();
+        if (!$user || !$user->desa_id) {
+            return false;
+        }
+
+        return in_array($user->role, ['KEPALA_DESA', 'BENDAHARA']);
+    }
+
+    /**
      * Get filtered setoran kecamatans with pagination
      */
     public function getFilteredData(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $isSuperAdmin = $this->isSuperAdmin();
+        $canViewInternal = $this->canViewInternalExpenses();
 
         $query = $isSuperAdmin
             ? SetoranKecamatan::withoutGlobalScope(TenantScope::class)
@@ -55,12 +71,19 @@ class SetoranKecamatanRepository
             $query->where('status', $filters['status']);
         }
 
-        // Filter kategori
-        if (!empty($filters['kategori']) && $filters['kategori'] !== 'ALL' && $filters['kategori'] !== 'all') {
-            if ($filters['kategori'] === 'INTERNAL') {
-                $query->where('kategori', '!=', 'SETOR_KECAMATAN');
-            } else {
-                $query->where('kategori', $filters['kategori']);
+        // Filter kategori:
+        // Super Admin (Kecamatan) maupun Super Admin (Admin Desa) DILARANG melihat pengeluaran internal desa.
+        // HANYA Kepala Desa & Bendahara yang berhak melihat pengeluaran kas internal desa.
+        if (!$canViewInternal) {
+            $query->where('kategori', 'SETOR_KECAMATAN');
+        } else {
+            // Kepala Desa / Bendahara: bisa memfilter sesuai kebutuhan internal desa
+            if (!empty($filters['kategori']) && $filters['kategori'] !== 'ALL' && $filters['kategori'] !== 'all') {
+                if ($filters['kategori'] === 'INTERNAL') {
+                    $query->where('kategori', '!=', 'SETOR_KECAMATAN');
+                } else {
+                    $query->where('kategori', $filters['kategori']);
+                }
             }
         }
 
@@ -92,14 +115,19 @@ class SetoranKecamatanRepository
     public function getKpiSummary(array $filters): array
     {
         $isSuperAdmin = $this->isSuperAdmin();
+        $canViewInternal = $this->canViewInternalExpenses();
         $tahun = $filters['tahun'] ?? 2026;
         $targetDesaId = (!empty($filters['desa_id']) && $filters['desa_id'] !== 'ALL' && $filters['desa_id'] !== 'all')
             ? (int) $filters['desa_id']
             : null;
 
-        // Base Setoran Query
-        $setoranQuery = $isSuperAdmin
-            ? SetoranKecamatan::withoutGlobalScope(TenantScope::class)->where('tahun', $tahun)
+        // Base Setoran Query:
+        // Jika user tidak berhak melihat internal (Super Admin System maupun Super Admin Desa):
+        // HANYA hitung SETOR_KECAMATAN. Pengeluaran internal desa terisolasi 100% untuk Kades & Bendahara.
+        $setoranQuery = (!$canViewInternal)
+            ? ($isSuperAdmin
+                ? SetoranKecamatan::withoutGlobalScope(TenantScope::class)->where('tahun', $tahun)->where('kategori', 'SETOR_KECAMATAN')
+                : SetoranKecamatan::query()->where('tahun', $tahun)->where('kategori', 'SETOR_KECAMATAN'))
             : SetoranKecamatan::query()->where('tahun', $tahun);
 
         if ($isSuperAdmin && $targetDesaId) {
@@ -110,7 +138,10 @@ class SetoranKecamatanRepository
 
         $totalDisetorkan = (float) $allSetoran->sum('nominal');
         $totalDiterima = (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
-        $totalPengeluaranInternal = (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal');
+        // Pengeluaran internal disembunyikan sepenuhnya dari Super Admin (System maupun Desa) (bernilai 0)
+        $totalPengeluaranInternal = $canViewInternal
+            ? (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal')
+            : 0.0;
         $totalPengeluaranDesa = $totalDiterima + $totalPengeluaranInternal;
 
         $totalPending = (float) $allSetoran->where('status', 'PENDING')->sum('nominal');
@@ -131,7 +162,13 @@ class SetoranKecamatanRepository
         }
 
         $totalRealisasiDesa = (float) $dhkpQuery->sum('ketetapan_pbb');
-        $sisaKasDesa = max(0, $totalRealisasiDesa - $totalPengeluaranDesa);
+
+        // Sisa Kas:
+        // Untuk Super Admin (Kecamatan maupun Desa): Menunjukkan Sisa Belum Disetor ke Kecamatan (Realisasi PBB - Total Setoran Diterima)
+        // Untuk Pejabat Internal (Kades/Bendahara): Menunjukkan Sisa Saldo Kas Desa Riil (Realisasi PBB - Total Pengeluaran Desa)
+        $sisaKasDesa = $canViewInternal
+            ? max(0, $totalRealisasiDesa - $totalPengeluaranDesa)
+            : max(0, $totalRealisasiDesa - $totalDiterima);
 
         // Rekapitulasi per Desa
         $rekapPerDesa = [];
@@ -161,13 +198,21 @@ class SetoranKecamatanRepository
                 ->where('status_bayar', 'LUNAS')
                 ->sum('ketetapan_pbb');
 
-            $desaSetoranAll = SetoranKecamatan::withoutGlobalScope(TenantScope::class)
+            // Untuk Super Admin atau pihak non-internal, transaksi yang diperiksa hanya SETOR_KECAMATAN
+            $desaSetoranQuery = SetoranKecamatan::withoutGlobalScope(TenantScope::class)
                 ->where('desa_id', $desa->id)
-                ->where('tahun', $tahun)
-                ->get();
+                ->where('tahun', $tahun);
+
+            if (!$canViewInternal) {
+                $desaSetoranQuery->where('kategori', 'SETOR_KECAMATAN');
+            }
+
+            $desaSetoranAll = $desaSetoranQuery->get();
 
             $disetorDiterima = (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
-            $pengeluaranInternalDesa = (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal');
+            $pengeluaranInternalDesa = $canViewInternal
+                ? (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal')
+                : 0.0;
             $totalPengeluaranDesaLocal = $disetorDiterima + $pengeluaranInternalDesa;
             $disetorPending = (float) $desaSetoranAll->where('status', 'PENDING')->sum('nominal');
 
@@ -185,7 +230,7 @@ class SetoranKecamatanRepository
                 'total_pengeluaran_internal' => $pengeluaranInternalDesa,
                 'total_pengeluaran_desa' => $totalPengeluaranDesaLocal,
                 'total_disetor_pending' => $disetorPending,
-                'sisa_kas_desa' => max(0, $desaDhkpLunas - $totalPengeluaranDesaLocal),
+                'sisa_kas_desa' => $isSuperAdmin ? max(0, $desaDhkpLunas - $disetorDiterima) : max(0, $desaDhkpLunas - $totalPengeluaranDesaLocal),
                 'persentase_disetor' => $persenDisetor,
                 'tanggal_setor_terakhir' => $lastSetoran ? $lastSetoran->tanggal_setor->format('Y-m-d') : null,
                 'status_terakhir' => $lastSetoran ? $lastSetoran->status : null,
@@ -217,13 +262,19 @@ class SetoranKecamatanRepository
     public function findById(int $id): ?SetoranKecamatan
     {
         $isSuperAdmin = $this->isSuperAdmin();
+        $canViewInternal = $this->canViewInternalExpenses();
 
-        return $isSuperAdmin
+        $query = $isSuperAdmin
             ? SetoranKecamatan::withoutGlobalScope(TenantScope::class)
-                ->with(['desa:id,nama_desa,kode_desa,nama_kecamatan', 'penerimaUser:id,name', 'creator:id,name'])
-                ->find($id)
-            : SetoranKecamatan::with(['desa:id,nama_desa,kode_desa,nama_kecamatan', 'penerimaUser:id,name', 'creator:id,name'])
-                ->find($id);
+            : SetoranKecamatan::query();
+
+        // Super Admin (Kecamatan maupun Desa) DILARANG melihat data pengeluaran internal desa
+        if (!$canViewInternal) {
+            $query->where('kategori', 'SETOR_KECAMATAN');
+        }
+
+        return $query->with(['desa:id,nama_desa,kode_desa,nama_kecamatan', 'penerimaUser:id,name', 'creator:id,name'])
+            ->find($id);
     }
 
     /**
@@ -327,15 +378,24 @@ class SetoranKecamatanRepository
             $needActionCount = $tambahEditCount + $hapusCount;
             $roleContext = 'KEPALA_DESA';
             $reviewLabel = 'Persetujuan Pengeluaran Internal Desa';
-        } else {
-            // Admin Desa / Bendahara: memantau seluruh pengeluaran desa yang sedang diproses atau ditolak
+        } elseif ($role === 'BENDAHARA') {
+            // Bendahara: memantau seluruh pengeluaran desa (Setor Kecamatan & Internal) yang sedang diproses atau ditolak
             $pendingQuery = (clone $baseQuery)->whereIn('status', ['PENDING', 'PENDING_HAPUS', 'DITOLAK']);
             $tambahEditCount = (clone $baseQuery)->where('status', 'PENDING')->count();
             $hapusCount = (clone $baseQuery)->where('status', 'PENDING_HAPUS')->count();
             $ditolakCount = (clone $baseQuery)->where('status', 'DITOLAK')->count();
             $needActionCount = $tambahEditCount + $hapusCount + $ditolakCount;
-            $roleContext = 'ADMIN_DESA';
+            $roleContext = 'BENDAHARA';
             $reviewLabel = 'Status Pengajuan Pengeluaran Desa';
+        } else {
+            // Super Admin (Admin Desa) / role lainnya: HANYA memantau transaksi SETOR_KECAMATAN
+            $pendingQuery = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->whereIn('status', ['PENDING', 'PENDING_HAPUS', 'DITOLAK']);
+            $tambahEditCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING')->count();
+            $hapusCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING_HAPUS')->count();
+            $ditolakCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'DITOLAK')->count();
+            $needActionCount = $tambahEditCount + $hapusCount + $ditolakCount;
+            $roleContext = 'ADMIN_DESA';
+            $reviewLabel = 'Status Pengajuan Setoran ke Kecamatan';
         }
 
         $latestItems = $pendingQuery->orderBy('updated_at', 'desc')

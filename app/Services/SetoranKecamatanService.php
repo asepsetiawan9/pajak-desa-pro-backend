@@ -60,6 +60,14 @@ class SetoranKecamatanService
         $data['desa_id'] = $desaId;
 
         $kategori = $data['kategori'] ?? 'SETOR_KECAMATAN';
+
+        // Super Admin (Kecamatan maupun Desa) DILARANG mencatat pengeluaran internal desa.
+        // HANYA Kepala Desa & Bendahara yang berwenang mengelola kas internal desa.
+        $canManageInternal = $user && in_array($user->role, ['KEPALA_DESA', 'BENDAHARA']);
+        if ($kategori !== 'SETOR_KECAMATAN' && !$canManageInternal) {
+            throw new \Exception("Super Admin dan pihak luar tidak memiliki akses untuk membuat pengeluaran internal desa. Hanya Kepala Desa atau Bendahara yang berwenang.");
+        }
+
         $data['kategori'] = $kategori;
         $tahun = (int) ($data['tahun'] ?? date('Y'));
         $nominal = (float) ($data['nominal'] ?? 0);
@@ -112,9 +120,18 @@ class SetoranKecamatanService
         $user = auth()->user();
         $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
         $isSameDesa = $user && ((int)$user->desa_id === (int)$setoran->desa_id);
+        $canManageInternal = $user && in_array($user->role, ['KEPALA_DESA', 'BENDAHARA']);
 
         if (!$isSuperAdmin && !$isSameDesa) {
             throw new \Exception("Anda tidak memiliki wewenang untuk mengubah data desa ini.");
+        }
+
+        if ($setoran->kategori !== 'SETOR_KECAMATAN' && !$canManageInternal) {
+            throw new \Exception("Super Admin tidak memiliki wewenang untuk mengubah pengeluaran internal desa.");
+        }
+
+        if (isset($data['kategori']) && $data['kategori'] !== 'SETOR_KECAMATAN' && !$canManageInternal) {
+            throw new \Exception("Super Admin tidak dapat mengubah kategori menjadi pengeluaran internal desa.");
         }
 
         $desaId = $setoran->desa_id;
@@ -257,9 +274,14 @@ class SetoranKecamatanService
         $isSuperAdmin = $user && ($user->role === 'SUPER_ADMIN_SYSTEM' || is_null($user->desa_id));
         $isKades = $user && $user->role === 'KEPALA_DESA';
         $isSameDesa = $user && ((int)$user->desa_id === (int)$setoran->desa_id);
+        $canManageInternal = $user && in_array($user->role, ['KEPALA_DESA', 'BENDAHARA']);
 
         if (!$isSuperAdmin && !$isSameDesa) {
             throw new \Exception("Anda tidak memiliki wewenang untuk menghapus data desa ini.");
+        }
+
+        if ($setoran->kategori !== 'SETOR_KECAMATAN' && !$canManageInternal) {
+            throw new \Exception("Super Admin tidak memiliki wewenang untuk menghapus pengeluaran internal desa.");
         }
 
         // Direct Delete:
