@@ -26,17 +26,18 @@ class SetoranKecamatanRepository
 
     /**
      * Check if authenticated user can view internal village expenses (Pengeluaran Internal Desa)
-     * Aturan Baku: Super Admin System (Kecamatan) maupun Super Admin (Admin Desa) DILARANG melihat pengeluaran kas internal desa.
-     * Hanya Kepala Desa & Bendahara yang berhak mengakses & melihat pengeluaran kas internal desa.
+     * Aturan Baku:
+     * - HANYA aparatur internal desa (Admin Desa, Kepala Desa, Bendahara) dari desa terkait yang berhak melihat pengeluaran kas internal desa.
+     * - Super Admin System (Kecamatan) maupun pihak luar/kolektor DILARANG KERAS melihat pengeluaran kas internal desa.
      */
     private function canViewInternalExpenses(): bool
     {
         $user = auth()->user();
-        if (!$user || !$user->desa_id) {
+        if (!$user || is_null($user->desa_id) || $user->role === 'SUPER_ADMIN_SYSTEM' || $user->role === 'KOLEKTOR') {
             return false;
         }
 
-        return in_array($user->role, ['KEPALA_DESA', 'BENDAHARA']);
+        return in_array($user->role, ['SUPER_ADMIN', 'KEPALA_DESA', 'BENDAHARA']);
     }
 
     /**
@@ -378,17 +379,17 @@ class SetoranKecamatanRepository
             $needActionCount = $tambahEditCount + $hapusCount;
             $roleContext = 'KEPALA_DESA';
             $reviewLabel = 'Persetujuan Pengeluaran Internal Desa';
-        } elseif ($role === 'BENDAHARA') {
-            // Bendahara: memantau seluruh pengeluaran desa (Setor Kecamatan & Internal) yang sedang diproses atau ditolak
+        } elseif ($role === 'SUPER_ADMIN' || $role === 'BENDAHARA') {
+            // Admin Desa & Bendahara: memantau seluruh pengeluaran desa (Setor Kecamatan & Internal) yang sedang diproses atau ditolak
             $pendingQuery = (clone $baseQuery)->whereIn('status', ['PENDING', 'PENDING_HAPUS', 'DITOLAK']);
             $tambahEditCount = (clone $baseQuery)->where('status', 'PENDING')->count();
             $hapusCount = (clone $baseQuery)->where('status', 'PENDING_HAPUS')->count();
             $ditolakCount = (clone $baseQuery)->where('status', 'DITOLAK')->count();
             $needActionCount = $tambahEditCount + $hapusCount + $ditolakCount;
-            $roleContext = 'BENDAHARA';
+            $roleContext = 'ADMIN_DESA';
             $reviewLabel = 'Status Pengajuan Pengeluaran Desa';
         } else {
-            // Super Admin (Admin Desa) / role lainnya: HANYA memantau transaksi SETOR_KECAMATAN
+            // Role lainnya / kolektor: HANYA memantau transaksi SETOR_KECAMATAN
             $pendingQuery = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->whereIn('status', ['PENDING', 'PENDING_HAPUS', 'DITOLAK']);
             $tambahEditCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING')->count();
             $hapusCount = (clone $baseQuery)->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING_HAPUS')->count();

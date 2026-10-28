@@ -15,10 +15,30 @@ class SetoranKecamatanController extends Controller
     ) {}
 
     /**
+     * Role Guard: Kolektor dilarang mengakses modul pengeluaran dan setoran kas
+     */
+    private function guardAgainstKolektor(): ?JsonResponse
+    {
+        $user = auth()->user();
+        if ($user && $user->role === 'KOLEKTOR') {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => 'Petugas Kolektor tidak memiliki izin untuk mengakses modul pengeluaran dan setoran kas.',
+            ], 403);
+        }
+        return null;
+    }
+
+    /**
      * GET /api/v1/setoran-kecamatan
      */
     public function index(Request $request): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $perPage = (int) $request->input('per_page', $request->input('limit', 15));
         $filters = $request->only(['desa_id', 'status', 'tahun', 'kategori', 'search']);
 
@@ -48,6 +68,10 @@ class SetoranKecamatanController extends Controller
      */
     public function summary(Request $request): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $filters = $request->only(['desa_id', 'tahun']);
         $summary = $this->service->getSummary($filters);
 
@@ -63,6 +87,10 @@ class SetoranKecamatanController extends Controller
      */
     public function pendingReviews(Request $request): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $desaId = $request->filled('desa_id') && $request->input('desa_id') !== 'ALL' && $request->input('desa_id') !== 'all'
             ? (int) $request->input('desa_id')
             : null;
@@ -81,6 +109,10 @@ class SetoranKecamatanController extends Controller
      */
     public function show(int $id): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $setoran = $this->service->getById($id);
         if (!$setoran) {
             return response()->json([
@@ -102,6 +134,10 @@ class SetoranKecamatanController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $validator = Validator::make($request->all(), [
             'tanggal_setor' => 'required|date',
             'kategori' => 'nullable|string|in:SETOR_KECAMATAN,KEGIATAN_DESA,OPERASIONAL_DESA,ADMINISTRASI,LAINNYA',
@@ -149,6 +185,10 @@ class SetoranKecamatanController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $validator = Validator::make($request->all(), [
             'tanggal_setor' => 'sometimes|required|date',
             'kategori' => 'nullable|string|in:SETOR_KECAMATAN,KEGIATAN_DESA,OPERASIONAL_DESA,ADMINISTRASI,LAINNYA',
@@ -196,6 +236,10 @@ class SetoranKecamatanController extends Controller
      */
     public function verify(Request $request, int $id): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:DITERIMA,DITOLAK,PENDING,PENDING_HAPUS,APPROVE_DELETE,REJECT_DELETE',
             'catatan_kecamatan' => 'nullable|string',
@@ -248,6 +292,10 @@ class SetoranKecamatanController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        if ($forbidden = $this->guardAgainstKolektor()) {
+            return $forbidden;
+        }
+
         try {
             $result = $this->service->deleteSetoran($id);
             return response()->json([

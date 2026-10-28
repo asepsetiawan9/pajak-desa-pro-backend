@@ -377,6 +377,7 @@ class ApiTest extends TestCase
         $superAdmin = User::where('role', 'SUPER_ADMIN_SYSTEM')->first() ?? User::first();
         $kades = User::where('role', 'KEPALA_DESA')->first();
         $adminDesa = User::where('role', 'SUPER_ADMIN')->whereNotNull('desa_id')->first() ?? $kades;
+        $kolektor = User::where('role', 'KOLEKTOR')->first();
 
         // 1. Create Setoran Baru dari Desa ke Kas Kecamatan
         $storeResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
@@ -485,32 +486,37 @@ class ApiTest extends TestCase
         ]);
         $superAdminCreateInternalResponse->assertStatus(400);
 
-        // [D] Security Isolation: Super Admin Desa (role SUPER_ADMIN) JUGA DILARANG melihat transaksi internal
-        // Index endpoint: Super Admin Desa HANYA mendapatkan SETOR_KECAMATAN
-        $adminDesaListResponse = $this->actingAs($adminDesa)->getJson('/api/v1/setoran-kecamatan');
-        $adminDesaListResponse->assertStatus(200);
-        $adminDesaItems = $adminDesaListResponse->json('data');
-        foreach ($adminDesaItems as $item) {
-            $this->assertEquals('SETOR_KECAMATAN', $item['kategori'], 'Super Admin Desa tidak boleh melihat transaksi internal desa!');
-            $this->assertNotEquals($internalId, $item['id'], 'ID transaksi internal desa tidak boleh muncul di daftar Super Admin Desa!');
+        // [D] Kolektor ("dll") DILARANG KERAS mengakses modul pengeluaran / setoran kas -> Wajib 403
+        if ($kolektor) {
+            $kolektorListResponse = $this->actingAs($kolektor)->getJson('/api/v1/setoran-kecamatan');
+            $kolektorListResponse->assertStatus(403);
+
+            $kolektorCreateResponse = $this->actingAs($kolektor)->postJson('/api/v1/setoran-kecamatan', [
+                'kategori' => 'SETOR_KECAMATAN',
+                'tanggal_setor' => '2026-08-12',
+                'nominal' => 500000,
+                'metode_setoran' => 'TUNAI',
+                'penyetor_nama' => 'Kolektor Lapangan',
+            ]);
+            $kolektorCreateResponse->assertStatus(403);
         }
 
-        // Show endpoint: Super Admin Desa mencoba akses internalId langsung -> Wajib 404
+        // [E] Aparatur Internal Desa (Admin Desa): Berhak melihat dan mencatat transaksi internal desanya sendiri
         $adminDesaShowResponse = $this->actingAs($adminDesa)->getJson("/api/v1/setoran-kecamatan/{$internalId}");
-        $adminDesaShowResponse->assertStatus(404);
+        $adminDesaShowResponse->assertStatus(200)
+            ->assertJsonPath('data.kategori', 'KEGIATAN_DESA');
 
-        // Create endpoint: Super Admin Desa DILARANG membuat pengeluaran internal desa -> Wajib 400
         $adminDesaCreateInternalResponse = $this->actingAs($adminDesa)->postJson('/api/v1/setoran-kecamatan', [
-            'kategori' => 'OPERASIONAL_DESA',
+            'kategori' => 'ADMINISTRASI',
             'tanggal_setor' => '2026-08-12',
-            'nominal' => 500000,
+            'nominal' => 200000,
             'metode_setoran' => 'TUNAI',
             'penyetor_nama' => 'Admin Desa',
             'desa_id' => $adminDesa->desa_id ?? 1,
         ]);
-        $adminDesaCreateInternalResponse->assertStatus(400);
+        $adminDesaCreateInternalResponse->assertStatus(201);
 
-        // [E] Kepala Desa (Pejabat Internal yang Berwenang): Berhak melihat transaksi internal
+        // [F] Kepala Desa (Pejabat Penyetuju Internal): Berhak melihat transaksi internal desanya
         $kadesShowResponse = $this->actingAs($kades)->getJson("/api/v1/setoran-kecamatan/{$internalId}");
         $kadesShowResponse->assertStatus(200)
             ->assertJsonPath('data.kategori', 'KEGIATAN_DESA');
