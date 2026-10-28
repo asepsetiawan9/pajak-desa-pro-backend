@@ -137,13 +137,22 @@ class SetoranKecamatanRepository
 
         $allSetoran = $setoranQuery->get();
 
-        $totalDisetorkan = (float) $allSetoran->sum('nominal');
+        // 1. Total Setoran ke Kecamatan (MURNI transaksi dengan kategori SETOR_KECAMATAN dan tidak ditolak)
+        $totalDisetorkan = (float) $allSetoran->where('kategori', 'SETOR_KECAMATAN')->where('status', '!=', 'DITOLAK')->sum('nominal');
         $totalDiterima = (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
-        // Pengeluaran internal disembunyikan sepenuhnya dari Super Admin (System maupun Desa) (bernilai 0)
+
+        // 2. Total Pengeluaran Internal Desa (Operasional, Kegiatan, ATK, dll):
+        // Disembunyikan sepenuhnya dari Super Admin System (Kecamatan) (bernilai 0.0)
+        // Untuk aparatur internal desa (Admin Desa, Kades, Bendahara): menghitung pengeluaran internal yang aktif (tidak ditolak)
         $totalPengeluaranInternal = $canViewInternal
+            ? (float) $allSetoran->where('kategori', '!=', 'SETOR_KECAMATAN')->where('status', '!=', 'DITOLAK')->sum('nominal')
+            : 0.0;
+        $totalPengeluaranInternalDiterima = $canViewInternal
             ? (float) $allSetoran->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal')
             : 0.0;
-        $totalPengeluaranDesa = $totalDiterima + $totalPengeluaranInternal;
+
+        // Total akumulasi pengeluaran kas desa (Setor Kecamatan + Pengeluaran Internal)
+        $totalPengeluaranDesa = $totalDisetorkan + $totalPengeluaranInternal;
 
         $totalPending = (float) $allSetoran->where('status', 'PENDING')->sum('nominal');
         $totalDitolak = (float) $allSetoran->where('status', 'DITOLAK')->sum('nominal');
@@ -165,8 +174,8 @@ class SetoranKecamatanRepository
         $totalRealisasiDesa = (float) $dhkpQuery->sum('ketetapan_pbb');
 
         // Sisa Kas:
-        // Untuk Super Admin (Kecamatan maupun Desa): Menunjukkan Sisa Belum Disetor ke Kecamatan (Realisasi PBB - Total Setoran Diterima)
-        // Untuk Pejabat Internal (Kades/Bendahara): Menunjukkan Sisa Saldo Kas Desa Riil (Realisasi PBB - Total Pengeluaran Desa)
+        // Untuk Super Admin (Kecamatan): Menunjukkan Sisa Belum Disetor ke Kecamatan (Realisasi PBB - Total Setoran Diterima)
+        // Untuk Pejabat Internal Desa: Menunjukkan Sisa Saldo Kas Desa Riil (Realisasi PBB - Total Pengeluaran Desa)
         $sisaKasDesa = $canViewInternal
             ? max(0, $totalRealisasiDesa - $totalPengeluaranDesa)
             : max(0, $totalRealisasiDesa - $totalDiterima);
@@ -211,11 +220,15 @@ class SetoranKecamatanRepository
             $desaSetoranAll = $desaSetoranQuery->get();
 
             $disetorDiterima = (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', 'SETOR_KECAMATAN')->sum('nominal');
+            $disetorTotal = (float) $desaSetoranAll->where('kategori', 'SETOR_KECAMATAN')->where('status', '!=', 'DITOLAK')->sum('nominal');
             $pengeluaranInternalDesa = $canViewInternal
+                ? (float) $desaSetoranAll->where('kategori', '!=', 'SETOR_KECAMATAN')->where('status', '!=', 'DITOLAK')->sum('nominal')
+                : 0.0;
+            $pengeluaranInternalDesaDiterima = $canViewInternal
                 ? (float) $desaSetoranAll->where('status', 'DITERIMA')->where('kategori', '!=', 'SETOR_KECAMATAN')->sum('nominal')
                 : 0.0;
-            $totalPengeluaranDesaLocal = $disetorDiterima + $pengeluaranInternalDesa;
-            $disetorPending = (float) $desaSetoranAll->where('status', 'PENDING')->sum('nominal');
+            $totalPengeluaranDesaLocal = $disetorTotal + $pengeluaranInternalDesa;
+            $disetorPending = (float) $desaSetoranAll->where('kategori', 'SETOR_KECAMATAN')->where('status', 'PENDING')->sum('nominal');
 
             // Persentase Capaian Setoran Kecamatan = (Disetor ke Kecamatan Verified / Target PBB) * 100
             $persenDisetor = $targetPbb > 0 ? round(($disetorDiterima / $targetPbb) * 100, 2) : 0;
@@ -229,6 +242,7 @@ class SetoranKecamatanRepository
                 'realisasi_pbb' => $desaDhkpLunas,
                 'total_disetor_diterima' => $disetorDiterima,
                 'total_pengeluaran_internal' => $pengeluaranInternalDesa,
+                'total_pengeluaran_internal_diterima' => $pengeluaranInternalDesaDiterima,
                 'total_pengeluaran_desa' => $totalPengeluaranDesaLocal,
                 'total_disetor_pending' => $disetorPending,
                 'sisa_kas_desa' => $isSuperAdmin ? max(0, $desaDhkpLunas - $disetorDiterima) : max(0, $desaDhkpLunas - $totalPengeluaranDesaLocal),
@@ -242,6 +256,7 @@ class SetoranKecamatanRepository
             'total_disetorkan' => $totalDisetorkan,
             'total_diterima' => $totalDiterima,
             'total_pengeluaran_internal' => $totalPengeluaranInternal,
+            'total_pengeluaran_internal_diterima' => $totalPengeluaranInternalDiterima,
             'total_pengeluaran_desa' => $totalPengeluaranDesa,
             'total_pending' => $totalPending,
             'total_ditolak' => $totalDitolak,
@@ -289,13 +304,13 @@ class SetoranKecamatanRepository
             ->where('status_bayar', 'LUNAS')
             ->sum('ketetapan_pbb');
 
-        $totalPengeluaranDiterima = (float) SetoranKecamatan::withoutGlobalScope(TenantScope::class)
+        $totalPengeluaranAktif = (float) SetoranKecamatan::withoutGlobalScope(TenantScope::class)
             ->where('desa_id', $desaId)
             ->where('tahun', $tahun)
-            ->where('status', 'DITERIMA')
+            ->where('status', '!=', 'DITOLAK')
             ->sum('nominal');
 
-        return max(0.0, $dhkpLunas - $totalPengeluaranDiterima);
+        return max(0.0, $dhkpLunas - $totalPengeluaranAktif);
     }
 
     /**
